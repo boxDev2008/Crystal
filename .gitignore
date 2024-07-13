@@ -1,0 +1,7 @@
+obj/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+bin/Release/*.exe
+bin/Release/*.pdb
+bin/Release/*.lib
