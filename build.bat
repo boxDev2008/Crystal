@@ -1,0 +1,1 @@
+MSBuild.exe Crystal.sln -property:Configuration=Release
