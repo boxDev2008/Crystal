@@ -1,1 +1,1 @@
-tools\premake5\premake5.exe gmake
+./tools/premake5/premake5 gmake2

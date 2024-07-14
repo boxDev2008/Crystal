@@ -37,7 +37,7 @@ const TextEditor::Palette &GetTokyoNightPalette()
 }
 
 
-std::shared_ptr<EditorWindow> EditorWindow::Create(std::filesystem::path &file)
+std::shared_ptr<EditorWindow> EditorWindow::Create(const std::filesystem::path &file)
 {
 	std::shared_ptr<EditorWindow> window = std::make_shared<EditorWindow>();
 	window->m_filePath = file;

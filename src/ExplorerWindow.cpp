@@ -5,7 +5,7 @@
 namespace Crystal
 {
 
-std::shared_ptr<ExplorerWindow> ExplorerWindow::Create(std::filesystem::path &directory)
+std::shared_ptr<ExplorerWindow> ExplorerWindow::Create(const std::filesystem::path &directory)
 {
 	std::shared_ptr<ExplorerWindow> window = std::make_shared<ExplorerWindow>();
 	window->m_mainDirectoryPath = directory;

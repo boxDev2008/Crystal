@@ -9,7 +9,7 @@ namespace Crystal
 class ExplorerWindow : public WindowPlugin
 {
 public:
-	static std::shared_ptr<ExplorerWindow> Create(std::filesystem::path &directory);
+	static std::shared_ptr<ExplorerWindow> Create(const std::filesystem::path &directory);
 	std::filesystem::path &GetDirectory(void) { return m_mainDirectoryPath; }
 	void RenderWindow(void);
 
