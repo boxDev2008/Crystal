@@ -11,6 +11,7 @@ class Application;
 class WindowPlugin : public std::enable_shared_from_this<WindowPlugin>
 {
 public:
+	virtual void OnWindowAdded(void) { }
 	virtual void RenderWindow(void) { }
 
 protected:

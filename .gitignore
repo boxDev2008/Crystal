@@ -5,3 +5,5 @@ obj/
 bin/Release/*.exe
 bin/Release/*.pdb
 bin/Release/*.lib
+*.make
+Makefile

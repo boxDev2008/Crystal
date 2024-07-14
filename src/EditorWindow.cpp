@@ -25,7 +25,7 @@ const TextEditor::Palette &GetTokyoNightPalette()
 			0xFF7A5953, // Comment (multi line)
 			0x0, // Background
 			0xffe0e0e0, // Cursor
-			0x80a06020, // Selection
+			0xFFDB5E87, // Selection
 			0x800020ff, // ErrorMarker
 			0x40f08000, // Breakpoint
 			0xFF7A5953, // Line number
@@ -127,8 +127,8 @@ void EditorWindow::RenderWindow(void)
 
 		m_editor.Render(c_title);
 
-		if (ImGui::IsWindowFocused())
-			m_application->SetLastWindow(shared_from_this());
+		//if (ImGui::IsWindowFocused())
+			//m_application->SetLastWindow(shared_from_this());
 
 		if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_S))
 		{

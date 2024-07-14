@@ -26,7 +26,6 @@
 //========================================================================
 
 #pragma once
-#define _GLFW_WIN32 1
 
 #if defined(_GLFW_USE_CONFIG_H)
  #include "glfw_config.h"

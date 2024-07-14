@@ -2,7 +2,6 @@
 #include "WindowPlugin.h"
 #include "WizardWindow.h"
 #include "EditorWindow.h"
-#include "ExplorerWindow.h"
 #include "Resources.h"
 
 #include "imgui/imgui.h"
@@ -10,6 +9,12 @@
 #include <stb_image.h>
 
 #include <algorithm>
+
+#if _WIN32
+	#include <windows.h>
+	#include <dwmapi.h>
+	#pragma comment(lib,"dwmapi.lib")
+#endif
 
 namespace Crystal
 {
@@ -26,7 +31,8 @@ std::shared_ptr<Application> CreateApplication(void)
 
 void Application::Run(void)
 {
-    //glfwSetErrorCallback(glfw_error_callback);
+    glfwSetErrorCallback(glfw_error_callback);
+
     if (!glfwInit())
         return;
 
@@ -38,6 +44,23 @@ void Application::Run(void)
         printf("GLFW: Vulkan Not Supported\n");
         return;
     }
+
+#if _WIN32
+	{
+		HWND win32Handle = glfwGetWin32Window(m_glfwWindow);
+		COLORREF titlebar_color = 0x00261C1A;
+		COLORREF border_color = 0x00593C41;
+		DwmSetWindowAttribute(
+			win32Handle, 34,
+			&border_color, sizeof(border_color)
+		);
+
+		DwmSetWindowAttribute(
+			win32Handle, 35,
+			&titlebar_color, sizeof(titlebar_color)
+		);
+	}
+#endif
 
 	{
 		GLFWimage icon; 
@@ -89,9 +112,9 @@ void Application::Run(void)
 	colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
 	colors[ImGuiCol_MenuBarBg]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
 	colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
-	colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
-	colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.28f, 0.30f, 0.42f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.33f, 0.35f, 0.48f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.33f, 0.35f, 0.48f, 1.00f);
 	colors[ImGuiCol_CheckMark]              = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
 	colors[ImGuiCol_SliderGrab]             = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
 	colors[ImGuiCol_SliderGrabActive]       = ImVec4(0.59f, 0.42f, 0.97f, 1.00f);
@@ -138,7 +161,6 @@ void Application::Run(void)
 
 	AddWindowPlugin(WizardWindow::Create());
 	AddWindowPlugin(EditorWindow::Create(std::filesystem::path("untitled.txt")));
-	m_lastWindow = m_windows[1];
 
     while (!glfwWindowShouldClose(m_glfwWindow))
     {
@@ -151,13 +173,15 @@ void Application::Run(void)
 
 		//if (ImGui::IsKeyPressed(ImGuiKey_F5)) system("cd ../../ && build.bat");
 		//if (ImGui::IsKeyPressed(ImGuiKey_F6)) system("cd ../../ && run.bat");
-
+		
 		RenderAllWindows();
 		ManageFreedCache();
 
 		ImGui::Render();
 		m_vkContext.EndFrame();
     }
+
+	m_windows.clear();
 
 	Resources::Shutdown();
 	m_vkContext.Shutdown();
@@ -170,6 +194,7 @@ void Application::Run(void)
 void Application::AddWindowPlugin(std::shared_ptr<WindowPlugin> window)
 {
 	window->m_application = this;
+	window->OnWindowAdded();
 	m_windows.push_back(std::move(window));
 }
 
@@ -205,11 +230,13 @@ bool Application::CheckForWindowWithPath(std::filesystem::path &path)
 	{
 		std::shared_ptr<EditorWindow> editorWindow = std::dynamic_pointer_cast<EditorWindow>(window);
 
-		if (!editorWindow)
-			continue;
-
-		if (editorWindow->GetFilePath().string() == path.string())
-			return true;
+		if (editorWindow)
+		{
+			if (editorWindow->GetFilePath().string() == path.string())
+				return true;
+			else
+				continue;
+		}
 	}
 	return false;
 }
