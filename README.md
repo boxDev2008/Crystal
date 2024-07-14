@@ -24,6 +24,7 @@ Run `.\run.bat` or just cd into the `bin/Release` folder (On Windows)
 - [x] File Explorer
 - [x] Syntax highlighting (for C++)
 - [x] Lightweight
+- [ ] Image viewer
 - [ ] Code completion
 - [ ] Integrated debugger
 - [ ] Customizable themes
