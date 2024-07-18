@@ -5,7 +5,6 @@
 #include "Resources.h"
 
 #include "imgui/imgui.h"
-
 #include <stb_image.h>
 
 #include <algorithm>
@@ -21,7 +20,7 @@ namespace Crystal
 
 static void glfw_error_callback(int error, const char* description)
 {
-    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+	fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
 std::shared_ptr<Application> CreateApplication(void)
@@ -31,25 +30,27 @@ std::shared_ptr<Application> CreateApplication(void)
 
 void Application::Run(void)
 {
-    glfwSetErrorCallback(glfw_error_callback);
+	glfwSetErrorCallback(glfw_error_callback);
 
-    if (!glfwInit())
-        return;
+	if (!glfwInit())
+		return;
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    m_glfwWindow = glfwCreateWindow(1280, 720, "Crystal", nullptr, nullptr);
-    if (!glfwVulkanSupported())
-    {
-        printf("GLFW: Vulkan Not Supported\n");
-        return;
-    }
+	m_glfwWindow = glfwCreateWindow(1280, 720, "Crystal", nullptr, nullptr);
+	if (!glfwVulkanSupported())
+	{
+		printf("GLFW: Vulkan Not Supported\n");
+		return;
+	}
 
 #if _WIN32
 	{
 		HWND win32Handle = glfwGetWin32Window(m_glfwWindow);
-		COLORREF titlebar_color = 0x00261C1A;
+		COLORREF titlebar_color = 0x00271A1B;
 		COLORREF border_color = 0x00593C41;
+		COLORREF text_color = 0x00FAC4C7;
+
 		DwmSetWindowAttribute(
 			win32Handle, 34,
 			&border_color, sizeof(border_color)
@@ -58,6 +59,11 @@ void Application::Run(void)
 		DwmSetWindowAttribute(
 			win32Handle, 35,
 			&titlebar_color, sizeof(titlebar_color)
+		);
+
+		DwmSetWindowAttribute(
+			win32Handle, 36,
+			&text_color, sizeof(text_color)
 		);
 	}
 #endif
@@ -71,24 +77,24 @@ void Application::Run(void)
 
 	glfwSetWindowSizeLimits(m_glfwWindow, 700, 600, GLFW_DONT_CARE, GLFW_DONT_CARE);
 
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-    //io.ConfigViewportsNoAutoMerge = true;
-    //io.ConfigViewportsNoTaskBarIcon = true;
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	//io.ConfigViewportsNoAutoMerge = true;
+	//io.ConfigViewportsNoTaskBarIcon = true;
 
 	io.Fonts->AddFontFromFileTTF("fonts/JetBrainsMono-Regular.ttf", 20);
 
-    ImGuiStyle &style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
+	ImGuiStyle &style = ImGui::GetStyle();
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		style.WindowRounding = 0.0f;
+		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+	}
 
 	style.FrameRounding = 6.0f;
 	style.GrabRounding = 4.0f;
@@ -97,9 +103,9 @@ void Application::Run(void)
 	style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
 
 	ImVec4 *colors = style.Colors;
-	colors[ImGuiCol_Text]                   = ImVec4(0.76f, 0.79f, 0.95f, 1.00f);
-	colors[ImGuiCol_TextDisabled]           = ImVec4(0.33f, 0.35f, 0.48f, 1.00f);
-	colors[ImGuiCol_WindowBg]               = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
+	colors[ImGuiCol_Text]                   = ImVec4(0.78f, 0.77f, 0.98f, 1.00f);
+	colors[ImGuiCol_TextDisabled]           = ImVec4(0.34f, 0.33f, 0.45f, 1.00f);
+	colors[ImGuiCol_WindowBg]               = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
 	colors[ImGuiCol_ChildBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
 	colors[ImGuiCol_PopupBg]                = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
 	colors[ImGuiCol_Border]                 = ImVec4(0.71f, 0.61f, 0.95f, 0.25f);
@@ -107,8 +113,8 @@ void Application::Run(void)
 	colors[ImGuiCol_FrameBg]                = ImVec4(0.50f, 0.35f, 0.84f, 0.14f);
 	colors[ImGuiCol_FrameBgHovered]         = ImVec4(0.50f, 0.35f, 0.84f, 0.25f);
 	colors[ImGuiCol_FrameBgActive]          = ImVec4(0.53f, 0.37f, 0.86f, 0.31f);
-	colors[ImGuiCol_TitleBg]                = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
-	colors[ImGuiCol_TitleBgActive]          = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
+	colors[ImGuiCol_TitleBg]                = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
+	colors[ImGuiCol_TitleBgActive]          = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
 	colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
 	colors[ImGuiCol_MenuBarBg]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
 	colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
@@ -131,12 +137,12 @@ void Application::Run(void)
 	colors[ImGuiCol_ResizeGripHovered]      = ImVec4(0.57f, 0.40f, 0.93f, 1.00f);
 	colors[ImGuiCol_ResizeGripActive]       = ImVec4(0.57f, 0.40f, 0.93f, 1.00f);
 	colors[ImGuiCol_TabHovered]             = ImVec4(0.08f, 0.08f, 0.11f, 1.00f);
-	colors[ImGuiCol_Tab]                    = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
-	colors[ImGuiCol_TabSelected]            = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
-	colors[ImGuiCol_TabSelectedOverline]    = ImVec4(0.71f, 0.61f, 0.95f, 1.00f);
-	colors[ImGuiCol_TabDimmed]              = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
-	colors[ImGuiCol_TabDimmedSelected]      = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
-	colors[ImGuiCol_TabDimmedSelectedOverline]  = ImVec4(0.71f, 0.61f, 0.95f, 1.00f);
+	colors[ImGuiCol_Tab]                    = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
+	colors[ImGuiCol_TabSelected]            = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
+	colors[ImGuiCol_TabSelectedOverline]    = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
+	colors[ImGuiCol_TabDimmed]              = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
+	colors[ImGuiCol_TabDimmedSelected]      = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
+	colors[ImGuiCol_TabDimmedSelectedOverline]  = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
 	colors[ImGuiCol_DockingPreview]         = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
 	colors[ImGuiCol_DockingEmptyBg]         = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
 	colors[ImGuiCol_PlotLines]              = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
@@ -151,20 +157,20 @@ void Application::Run(void)
 	colors[ImGuiCol_TextLink]               = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
 	colors[ImGuiCol_TextSelectedBg]         = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
 	colors[ImGuiCol_DragDropTarget]         = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
-	colors[ImGuiCol_NavHighlight]           = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+	colors[ImGuiCol_NavHighlight]           = ImVec4(0.71f, 0.61f, 0.95f, 0.79f);
 	colors[ImGuiCol_NavWindowingHighlight]  = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
 	colors[ImGuiCol_NavWindowingDimBg]      = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-	colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+	colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(0.00f, 0.00f, 0.00f, 0.39f);
 
 	m_vkContext.Initialize(m_glfwWindow);
 	Resources::Initialize(&m_vkContext);
 
 	AddWindowPlugin(WizardWindow::Create());
-	AddWindowPlugin(EditorWindow::Create(std::filesystem::path("untitled.txt")));
+	AddWindowPlugin(EditorWindow::Create("untitled.txt"));
 
-    while (!glfwWindowShouldClose(m_glfwWindow))
-    {
-        glfwPollEvents();
+	while (!glfwWindowShouldClose(m_glfwWindow))
+	{
+		glfwPollEvents();
 
 		m_vkContext.BeginFrame();
 
@@ -173,13 +179,13 @@ void Application::Run(void)
 
 		//if (ImGui::IsKeyPressed(ImGuiKey_F5)) system("cd ../../ && build.bat");
 		//if (ImGui::IsKeyPressed(ImGuiKey_F6)) system("cd ../../ && run.bat");
-		
+
 		RenderAllWindows();
 		ManageFreedCache();
 
 		ImGui::Render();
 		m_vkContext.EndFrame();
-    }
+	}
 
 	m_windows.clear();
 
@@ -187,8 +193,8 @@ void Application::Run(void)
 	m_vkContext.Shutdown();
 	ImGui::DestroyContext();
 
-    glfwDestroyWindow(m_glfwWindow);
-    glfwTerminate();
+	glfwDestroyWindow(m_glfwWindow);
+	glfwTerminate();
 }
 
 void Application::AddWindowPlugin(std::shared_ptr<WindowPlugin> window)
@@ -224,7 +230,7 @@ void Application::RenderAllWindows(void)
 	}
 }
 
-bool Application::CheckForWindowWithPath(std::filesystem::path &path)
+std::shared_ptr<WindowPlugin> Application::CheckForWindowWithPath(std::filesystem::path &path)
 {
 	for (std::shared_ptr<WindowPlugin> window : m_windows)
 	{
@@ -233,12 +239,12 @@ bool Application::CheckForWindowWithPath(std::filesystem::path &path)
 		if (editorWindow)
 		{
 			if (editorWindow->GetFilePath().string() == path.string())
-				return true;
+				return editorWindow;
 			else
 				continue;
 		}
 	}
-	return false;
+	return nullptr;
 }
 
 ImVec2 Application::GetGlfwWindowPosition(void)
@@ -252,6 +258,13 @@ ImVec2 Application::GetGlfwWindowSize(void)
 {
 	int32_t x, y;
 	glfwGetWindowSize(m_glfwWindow, &x, &y);
+	return ImVec2(x, y);
+}
+
+ImVec2 Application::GetMouseCursorPosition(void)
+{
+	double  x, y;
+	glfwGetCursorPos(m_glfwWindow, &x, &y);
 	return ImVec2(x, y);
 }
 

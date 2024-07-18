@@ -1243,3 +1243,4 @@ IGFD_C_API void ManageGPUThumbnails(  // must be call in gpu zone, possibly a th
                                       // / destroy the textures
     ImGuiFileDialog* vContextPtr);    // ImGuiFileDialog context
 #endif                                // USE_THUMBNAILS
+

@@ -3,6 +3,7 @@
 #include "Resources.h"
 #include "ImGuiFileDialog.h"
 #include "ExplorerWindow.h"
+#include "TerminalWindow.h"
 
 namespace Crystal
 {
@@ -15,7 +16,7 @@ std::shared_ptr<WizardWindow> WizardWindow::Create(void)
 
 void WizardWindow::RenderWindow(void)
 {
-	if (ImGui::Begin("Welcome Wizard", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking))
+	if (ImGui::Begin("Welcome Wizard", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking))
 	{
 		ImVec2 mainWindowSize = m_application->GetGlfwWindowSize();
 		ImVec2 mainWindowOffset = m_application->GetGlfwWindowPosition();
@@ -45,9 +46,12 @@ void WizardWindow::RenderWindow(void)
 		{
 			if (ImGuiFileDialog::Instance()->IsOk())
 			{
-				//std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-				std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-				m_application->AddWindowPlugin(ExplorerWindow::Create(std::filesystem::path(filePath)));
+				//std::string path = ImGuiFileDialog::Instance()->GetFilePathName();
+				std::string path = ImGuiFileDialog::Instance()->GetCurrentPath();
+				m_application->SetMainDirectoryPath(path);
+
+				m_application->AddWindowPlugin(ExplorerWindow::Create(path));
+				m_application->AddWindowPlugin(TerminalWindow::Create(path));
 				m_opened = false;
 			}
 			

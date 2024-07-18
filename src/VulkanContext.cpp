@@ -674,6 +674,8 @@ VulkanContext::Texture VulkanContext::CreateTexture(const char *file)
 
 void VulkanContext::DestroyTexture(VulkanContext::Texture &texture)
 {
+    vkDeviceWaitIdle(s_contextInstance->m_device);
+
 	vkDestroySampler(s_contextInstance->m_device, texture.sampler, nullptr);
 	vkDestroyImageView(s_contextInstance->m_device, texture.imageView, nullptr);
 	vkDestroyImage(s_contextInstance->m_device, texture.image, nullptr);

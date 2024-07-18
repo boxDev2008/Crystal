@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "TextEditor.h"
+#include "Utils.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h" // for imGui::GetCurrentWindow()
@@ -741,6 +742,8 @@ void TextEditor::HandleKeyboardInputs()
 			Delete();
 		else if (!IsReadOnly() && !ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Backspace)))
 			Backspace();
+		//else if (!IsReadOnly() && ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Backspace)))
+			//CtrlBackspace();
 		else if (!ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Insert)))
 			mOverwrite ^= true;
 		else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Insert)))
@@ -1129,6 +1132,8 @@ void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 	if (!mIgnoreImGuiChild)
 		ImGui::BeginChild(aTitle, aSize, aBorder, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoNav);
 
+	mFocused = ImGui::IsWindowFocused();
+
 	if (mHandleKeyboardInputs)
 	{
 		HandleKeyboardInputs();
@@ -1143,6 +1148,9 @@ void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 
 	if (mHandleKeyboardInputs)
 		ImGui::PopAllowKeyboardFocus();
+	
+	mScrollX = ImGui::GetScrollX();
+	mScrollY = ImGui::GetScrollY();
 
 	if (!mIgnoreImGuiChild)
 		ImGui::EndChild();

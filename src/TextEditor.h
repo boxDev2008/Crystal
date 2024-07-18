@@ -182,6 +182,46 @@ public:
 		static const LanguageDefinition& Lua();
 	};
 
+	struct EditorState
+	{
+		Coordinates mSelectionStart;
+		Coordinates mSelectionEnd;
+		Coordinates mCursorPosition;
+	};
+
+	class UndoRecord
+	{
+	public:
+		UndoRecord() {}
+		~UndoRecord() {}
+
+		UndoRecord(
+			const std::string& aAdded,
+			const TextEditor::Coordinates aAddedStart,
+			const TextEditor::Coordinates aAddedEnd,
+
+			const std::string& aRemoved,
+			const TextEditor::Coordinates aRemovedStart,
+			const TextEditor::Coordinates aRemovedEnd,
+
+			TextEditor::EditorState& aBefore,
+			TextEditor::EditorState& aAfter);
+
+		void Undo(TextEditor* aEditor);
+		void Redo(TextEditor* aEditor);
+
+		std::string mAdded;
+		Coordinates mAddedStart;
+		Coordinates mAddedEnd;
+
+		std::string mRemoved;
+		Coordinates mRemovedStart;
+		Coordinates mRemovedEnd;
+
+		EditorState mBefore;
+		EditorState mAfter;
+	};
+
 	TextEditor();
 	~TextEditor();
 
@@ -262,6 +302,15 @@ public:
 	void Undo(int aSteps = 1);
 	void Redo(int aSteps = 1);
 
+	void DeleteRange(const Coordinates& aStart, const Coordinates& aEnd);
+	void AddUndo(UndoRecord& aValue);
+	EditorState GetState() const { return mState; }
+	Coordinates GetActualCursorCoordinates() const;
+	float TextDistanceToLineStart(const Coordinates& aFrom) const;
+	float GetScrollX() const { return mScrollX; }
+	float GetScrollY() const { return mScrollY; }
+	bool IsFocused() const { return mFocused; }
+
 	static const Palette& GetDarkPalette();
 	static const Palette& GetLightPalette();
 	static const Palette& GetRetroBluePalette();
@@ -269,62 +318,18 @@ public:
 private:
 	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
 
-	struct EditorState
-	{
-		Coordinates mSelectionStart;
-		Coordinates mSelectionEnd;
-		Coordinates mCursorPosition;
-	};
-
-	class UndoRecord
-	{
-	public:
-		UndoRecord() {}
-		~UndoRecord() {}
-
-		UndoRecord(
-			const std::string& aAdded,
-			const TextEditor::Coordinates aAddedStart,
-			const TextEditor::Coordinates aAddedEnd,
-
-			const std::string& aRemoved,
-			const TextEditor::Coordinates aRemovedStart,
-			const TextEditor::Coordinates aRemovedEnd,
-
-			TextEditor::EditorState& aBefore,
-			TextEditor::EditorState& aAfter);
-
-		void Undo(TextEditor* aEditor);
-		void Redo(TextEditor* aEditor);
-
-		std::string mAdded;
-		Coordinates mAddedStart;
-		Coordinates mAddedEnd;
-
-		std::string mRemoved;
-		Coordinates mRemovedStart;
-		Coordinates mRemovedEnd;
-
-		EditorState mBefore;
-		EditorState mAfter;
-	};
-
 	typedef std::vector<UndoRecord> UndoBuffer;
 
 	void ProcessInputs();
 	void Colorize(int aFromLine = 0, int aCount = -1);
 	void ColorizeRange(int aFromLine = 0, int aToLine = 0);
 	void ColorizeInternal();
-	float TextDistanceToLineStart(const Coordinates& aFrom) const;
 	void EnsureCursorVisible();
 	int GetPageSize() const;
 	std::string GetText(const Coordinates& aStart, const Coordinates& aEnd) const;
-	Coordinates GetActualCursorCoordinates() const;
 	Coordinates SanitizeCoordinates(const Coordinates& aValue) const;
 	void Advance(Coordinates& aCoordinates) const;
-	void DeleteRange(const Coordinates& aStart, const Coordinates& aEnd);
 	int InsertTextAt(Coordinates& aWhere, const char* aValue);
-	void AddUndo(UndoRecord& aValue);
 	Coordinates ScreenPosToCoordinates(const ImVec2& aPosition) const;
 	Coordinates FindWordStart(const Coordinates& aFrom) const;
 	Coordinates FindWordEnd(const Coordinates& aFrom) const;
@@ -371,6 +376,9 @@ private:
 	bool mHandleMouseInputs;
 	bool mIgnoreImGuiChild;
 	bool mShowWhitespaces;
+	float mScrollX;
+	float mScrollY;
+	bool mFocused;
 
 	Palette mPaletteBase;
 	Palette mPalette;
