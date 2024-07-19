@@ -176,8 +176,6 @@ void Application::Run(void)
 
 		ImGui::NewFrame();
 		ImGui::DockSpaceOverViewport();
-		
-		ImGui::ShowStyleEditor();
 
 		//if (ImGui::IsKeyPressed(ImGuiKey_F5)) system("cd ../../ && build.bat");
 		//if (ImGui::IsKeyPressed(ImGuiKey_F6)) system("cd ../../ && run.bat");
