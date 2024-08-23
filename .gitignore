@@ -2,8 +2,12 @@ obj/
 *.sln
 *.vcxproj
 *.vcxproj.filters
-bin/Release/*.exe
-bin/Release/*.pdb
-bin/Release/*.lib
+*.vcxproj.user
+*.vsidx
+*.suo
+*.pdb
+*.db
+*.lib
+*.exe
 *.make
 Makefile

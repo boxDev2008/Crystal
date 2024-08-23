@@ -1,6 +1,6 @@
 #pragma once
 
-#include "WindowPlugin.h"
+#include "WindowManager.h"
 
 #include <string>
 #include <regex>
@@ -24,7 +24,7 @@ public:
         int m_lineNumber;
     };
 
-    void ApplyErrorMarkersToAllEditorWindows(std::vector<std::shared_ptr<WindowPlugin>> windows, const std::string& compilerOutput, CompilerType compiler);
+    void ApplyErrorMarkersToAllEditorWindows(WindowManager &wm, const std::string& compilerOutput, CompilerType compiler);
 
     std::vector<BuildError> FilterErrorsByPath(const std::vector<BuildError> &allErrors, const std::filesystem::path& targetPath);
     std::vector<BuildError> FilterErrorsByPath(const std::filesystem::path &targetPath) { return FilterErrorsByPath(m_errors, targetPath); }

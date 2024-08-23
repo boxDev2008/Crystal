@@ -1,8 +1,15 @@
 #pragma once
 
-#include "WindowPlugin.h"
-#include "VulkanContext.h"
+#include "WindowManager.h"
+#include "PlatformWindow.h"
+#include "Preferences.h"
+#include "rendering/Renderer.h"
+
 #include "BuildErrorHandler.h"
+#include "SuggestionHandler.h"
+#include "LayoutHandler.h"
+#include "DragDropHandler.h"
+#include "lsp/LspHandler.h"
 
 #include <vector>
 
@@ -12,40 +19,38 @@ namespace Crystal
 class Application
 {
 public:
-	void Run(void);
-	void RenderAllWindows(void);
-	void ManageFreedCache(void);
+    Application(void);
+	void OnRender(void);
 
-	ImVec2 GetGlfwWindowPosition(void);
-	ImVec2 GetGlfwWindowSize(void);
-	ImVec2 GetMouseCursorPosition(void);
+	void OpenFile(const std::filesystem::path &path);
 
-	std::shared_ptr<WindowPlugin> CheckForWindowWithPath(std::filesystem::path &path);
-	std::vector<std::shared_ptr<WindowPlugin>> &GetAllWindowPlugins(void) { return m_windows; }
-	void AddWindowPlugin(std::shared_ptr<WindowPlugin> window);
-
-	VulkanContext &GetVulkanContext(void) { return m_vkContext; }
+	PlatformWindow &GetMainWindow(void) { return *m_mainWindow; }
+	Renderer &GetRenderer(void) { return *m_renderer; }
+	WindowManager &GetWindowManager(void) { return m_windowManager; }
 	BuildErrorHandler &GetBuildErrorHandler(void) { return m_buildErrorHandler; }
+	//SuggestionHandler &GetSuggestionHandler(void) { return m_suggestionHandler; }
+	DragDropHandler &GetDragDropHandler(void) { return m_dragDropHandler; }
+	LayoutHandler &GetLayoutHandler(void) { return m_layoutHandler; }
 
-	void SetMainDirectoryPath(const std::filesystem::path &path) { m_mainDirectory = path;  }
+	Preferences &GetPreferences(void) { return m_preferences; }
+
+	void SetMainDirectoryPath(const std::filesystem::path &path);
 	std::filesystem::path GetMainDirectoryPath(void) const { return m_mainDirectory; }
 
-	void SetLastWindow(WindowPlugin *window) { m_lastWindow = window; }
-	WindowPlugin *GetLastWindow(void) const { return m_lastWindow; }
-
 private:
-	std::vector<std::shared_ptr<WindowPlugin>> m_windows;
-	std::vector<uint32_t> m_freedWindowIndices;
-
-	WindowPlugin *m_lastWindow;
-
 	std::filesystem::path m_mainDirectory;
 
 	BuildErrorHandler m_buildErrorHandler;
-	VulkanContext m_vkContext;
-	GLFWwindow *m_glfwWindow;
-};
+	//SuggestionHandler m_suggestionHandler;
+	DragDropHandler m_dragDropHandler;
+	LayoutHandler m_layoutHandler;
+	Preferences m_preferences;
 
-std::shared_ptr<Application> CreateApplication(void);
+	std::unique_ptr<LspHandler> m_lspHandler;
+
+	Renderer *m_renderer;
+	WindowManager m_windowManager;
+	PlatformWindow *m_mainWindow;
+};
 
 }

@@ -97,6 +97,12 @@
 		"cinttypes": "cpp",
 		"variant": "cpp",
 		"strstream": "cpp",
-		"future": "cpp"
+		"future": "cpp",
+		"any": "cpp",
+		"ranges": "cpp",
+		"valarray": "cpp",
+		"process.h": "c",
+		"types.h": "c",
+		"csignal": "cpp"
 	}
 }

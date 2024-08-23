@@ -1,8 +1,32 @@
 #include "Application.h"
+#include "Utils.h"
 
-int main(void)
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cctype>
+#include <vector>
+
+#if 0
+#include <windows.h>
+
+int WinMain(
+    HINSTANCE   hInstance,
+    HINSTANCE   hPrevInstance,
+    LPSTR       lpCmdLine,
+    int         nCmdShow
+    )
 {
-	std::shared_ptr<Crystal::Application> app = Crystal::CreateApplication();
-	app->Run();
+	Crystal::Application app = Crystal::Application();
 	return 0;
 }
+
+#else
+
+int main(int argc, char **argv)
+{
+	Crystal::Application app = Crystal::Application();
+	return 0;
+}
+
+#endif

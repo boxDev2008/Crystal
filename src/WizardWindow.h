@@ -1,16 +1,14 @@
 #pragma once
 
-#include "WindowPlugin.h"
-#include "VulkanContext.h"
-#include "TextEditor.h"
+#include "Window.h"
+#include "rendering/Renderer.h"
 
 namespace Crystal
 {
 
-class WizardWindow : public WindowPlugin
+class WizardWindow : public Window
 {
 public:
-	static std::shared_ptr<WizardWindow> Create(void);
 	void RenderWindow(void);
 };
 

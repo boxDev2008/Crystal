@@ -1,83 +1,211 @@
 #include "Application.h"
-#include "WindowPlugin.h"
+#include "Window.h"
 #include "WizardWindow.h"
 #include "EditorWindow.h"
+#include "ImageWindow.h"
+#include "PreferencesWindow.h"
 #include "Resources.h"
+#include "rendering/VulkanRenderer.h"
 
-#include "imgui/imgui.h"
-#include <stb_image.h>
+#include "imgui.h"
+#include "imgui_internal.h"
+
+#include "ImGuiFileDialog.h"
+#include "ExplorerWindow.h"
+#include "TerminalWindow.h"
+#include "Utils.h"
+#include <filesystem>
 
 #include <algorithm>
-
-#if _WIN32
-	#include <windows.h>
-	#include <dwmapi.h>
-	#pragma comment(lib,"dwmapi.lib")
-#endif
+#include <sstream>
 
 namespace Crystal
 {
 
-static void glfw_error_callback(int error, const char* description)
+using namespace Math;
+
+static void glfwErrorCallback(int error, const char* description)
 {
 	fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-std::shared_ptr<Application> CreateApplication(void)
+void Application::OnRender(void)
 {
-	return std::make_shared<Application>();
+	ImGuiIO &io = ImGui::GetIO();
+	ImGuiStyle &style = ImGui::GetStyle();
+
+	m_renderer->BeginFrame();
+
+	ImGui::NewFrame();
+	m_layoutHandler.BuildDockspaceLayout();
+
+	if (io.KeyCtrl)
+	{
+		if (ImGui::IsKeyPressed(ImGuiKey_O, false))
+		{
+			IGFD::FileDialogConfig config;
+			config.flags = ImGuiFileDialogFlags_Modal;
+			config.path = ".";
+			config.countSelectionMax = 1;
+			ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".*", config);
+		}
+		else if (ImGui::IsKeyPressed(ImGuiKey_K, false))
+		{
+			IGFD::FileDialogConfig config;
+			config.flags = ImGuiFileDialogFlags_Modal;
+			config.path = ".";
+			config.countSelectionMax = 1;
+			ImGuiFileDialog::Instance()->OpenDialog("ChooseDirectoryDlgKey", "Choose Directory", nullptr, config);
+		}
+		else if (ImGui::IsKeyPressed(ImGuiKey_S, false))
+		{
+			EditorWindow *window = dynamic_cast<EditorWindow*>(m_windowManager.GetLastWindow());
+			if (window) window->SaveToFile();
+		}
+	}
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Open File", "Ctrl+O"))
+			{ 
+				IGFD::FileDialogConfig config;
+				config.flags = ImGuiFileDialogFlags_Modal;
+				config.path = ".";
+				config.countSelectionMax = 1;
+				ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".*", config);
+			}
+			if (ImGui::MenuItem("Open Directroy", "Ctrl+K"))
+			{ 
+				IGFD::FileDialogConfig config;
+				config.flags = ImGuiFileDialogFlags_Modal;
+				config.path = ".";
+				config.countSelectionMax = 1;
+				ImGuiFileDialog::Instance()->OpenDialog("ChooseDirectoryDlgKey", "Choose Directory", nullptr, config);
+			}
+			if (ImGui::MenuItem("Save", "Ctrl+S"))
+			{
+				EditorWindow *window = dynamic_cast<EditorWindow*>(m_windowManager.GetLastWindow());
+				if (window) window->SaveToFile();
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Edit"))
+		{
+			if (ImGui::MenuItem("Preferences"))
+			{
+				if (!m_windowManager.CheckForWindowOfType<PreferencesWindow>())
+					m_windowManager.AddWindow(new PreferencesWindow());
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Terminal"))
+		{
+			if (ImGui::MenuItem("New Terminal"))
+				m_windowManager.AddWindow(new TerminalWindow());
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Build"))
+		{
+			if (ImGui::MenuItem("Build and Run"))
+			{
+
+			}
+			if (ImGui::MenuItem("Build"))
+			{
+
+			}
+			if (ImGui::MenuItem("Run"))
+			{
+
+			}
+			ImGui::EndMenu();
+		}
+
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		ImGuiWindow* window = ImGui::GetCurrentWindow();
+
+		Vector2 p1 = Vector2(window->Pos.x, window->Pos.y + window->Size.y - 1);
+		Vector2 p2 = Vector2(window->Pos.x + window->Size.x, window->Pos.y + window->Size.y - 1);
+
+		drawList->AddLine(p1, p2, ImColor(style.Colors[ImGuiCol_Border]), style.WindowBorderSize);
+
+		ImGui::EndMainMenuBar();
+	}
+	ImGui::PopStyleVar();
+
+	ImGui::PushStyleColor(ImGuiCol_PopupBg, style.Colors[ImGuiCol_WindowBg]);
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10.0f, 5.0f });
+
+	ImGui::SetNextWindowSize({ 1000, 700 }, ImGuiCond_FirstUseEver);
+	if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey", 32, { 200, 100 }))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string path = ImGuiFileDialog::Instance()->GetFilePathName();
+			OpenFile(path);
+		}
+		
+		ImGuiFileDialog::Instance()->Close();
+	}
+
+	ImGui::SetNextWindowSize({ 1000, 700 }, ImGuiCond_FirstUseEver);
+	if (ImGuiFileDialog::Instance()->Display("ChooseDirectoryDlgKey", 32, { 200, 100 }))
+	{
+		if (ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+			ImGui::CloseCurrentPopup();
+
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string path = ImGuiFileDialog::Instance()->GetCurrentPath();
+			if (path != GetMainDirectoryPath())
+				SetMainDirectoryPath(path);
+		}
+		
+		ImGuiFileDialog::Instance()->Close();
+	}
+
+	ImGui::PopStyleVar();
+	ImGui::PopStyleColor();
+
+	m_windowManager.RenderAllWindows();
+
+	ImGui::Render();
+	m_renderer->EndFrame();
 }
 
-void Application::Run(void)
+Application::Application(void)
 {
-	glfwSetErrorCallback(glfw_error_callback);
+	glfwSetErrorCallback(glfwErrorCallback);
 
-	if (!glfwInit())
-		return;
+	PlatformWindowSettings settings = PlatformWindowSettings::Default();
+	settings.iconPath = "res/logo-small.png";
+	m_mainWindow = new PlatformWindow(settings,
+		[&]() { OnRender(); },
+		[&](int32_t count, const char **paths) {
+		if (count == 1 && !std::filesystem::is_regular_file(paths[0]) && paths[0] != GetMainDirectoryPath())
+		{
+			const char *path = paths[0];
+			SetMainDirectoryPath(path);		
+			return;
+		}
 
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		for (int32_t i = 0; i < count; ++i)
+		{
+			const char *path = paths[i];
 
-	m_glfwWindow = glfwCreateWindow(1280, 720, "Crystal", nullptr, nullptr);
-	if (!glfwVulkanSupported())
-	{
-		printf("GLFW: Vulkan Not Supported\n");
-		return;
-	}
+			if (!std::filesystem::is_regular_file(path))
+				continue;
 
-#if _WIN32
-	{
-		HWND win32Handle = glfwGetWin32Window(m_glfwWindow);
-		COLORREF titlebar_color = 0x00271A1B;
-		COLORREF border_color = 0x00593C41;
-		COLORREF text_color = 0x00FAC4C7;
+			if (GetWindowManager().CheckForWindowWithPath(path))
+				continue;
 
-		DwmSetWindowAttribute(
-			win32Handle, 34,
-			&border_color, sizeof(border_color)
-		);
+			OpenFile(path);
+		}
+	});
 
-		DwmSetWindowAttribute(
-			win32Handle, 35,
-			&titlebar_color, sizeof(titlebar_color)
-		);
-
-		DwmSetWindowAttribute(
-			win32Handle, 36,
-			&text_color, sizeof(text_color)
-		);
-	}
-#endif
-
-	{
-		GLFWimage icon; 
-		icon.pixels = stbi_load("res/logo-small.png", &icon.width, &icon.height, 0, 4);
-		glfwSetWindowIcon(m_glfwWindow, 1, &icon); 
-		stbi_image_free(icon.pixels);
-	}
-
-	glfwSetWindowSizeLimits(m_glfwWindow, 700, 600, GLFW_DONT_CARE, GLFW_DONT_CARE);
-
-	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -87,8 +215,8 @@ void Application::Run(void)
 	//io.ConfigViewportsNoAutoMerge = true;
 	//io.ConfigViewportsNoTaskBarIcon = true;
 
-	io.Fonts->AddFontFromFileTTF("fonts/JetBrainsMono-Regular.ttf", 20);
-
+	io.IniFilename = nullptr;
+          
 	ImGuiStyle &style = ImGui::GetStyle();
 	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{
@@ -96,176 +224,78 @@ void Application::Run(void)
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
 
-	style.FrameRounding = 6.0f;
-	style.GrabRounding = 4.0f;
+	style.FrameRounding = 2.0f;
+	style.GrabRounding = 1.0f;
+	style.ScrollbarRounding = 0.0f;
+	style.TabRounding = 0.0f;
+	style.DockingSeparatorSize = 1.0f;
+	style.ItemSpacing = ImVec2(7.0f, 4.0f);
 	style.WindowPadding = ImVec2(18.0f, 18.0f);
-	style.FramePadding = ImVec2(10.0f, 7.0f);
+	style.FramePadding = ImVec2(20.0f, 5.0f);
 	style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
 
-	ImVec4 *colors = style.Colors;
-	colors[ImGuiCol_Text]                   = ImVec4(0.78f, 0.77f, 0.98f, 1.00f);
-	colors[ImGuiCol_TextDisabled]           = ImVec4(0.34f, 0.33f, 0.45f, 1.00f);
-	colors[ImGuiCol_WindowBg]               = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
-	colors[ImGuiCol_ChildBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_PopupBg]                = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
-	colors[ImGuiCol_Border]                 = ImVec4(0.71f, 0.61f, 0.95f, 0.25f);
-	colors[ImGuiCol_BorderShadow]           = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_FrameBg]                = ImVec4(0.50f, 0.35f, 0.84f, 0.14f);
-	colors[ImGuiCol_FrameBgHovered]         = ImVec4(0.50f, 0.35f, 0.84f, 0.25f);
-	colors[ImGuiCol_FrameBgActive]          = ImVec4(0.53f, 0.37f, 0.86f, 0.31f);
-	colors[ImGuiCol_TitleBg]                = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
-	colors[ImGuiCol_TitleBgActive]          = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
-	colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
-	colors[ImGuiCol_MenuBarBg]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-	colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.28f, 0.30f, 0.42f, 1.00f);
-	colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.33f, 0.35f, 0.48f, 1.00f);
-	colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.33f, 0.35f, 0.48f, 1.00f);
-	colors[ImGuiCol_CheckMark]              = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
-	colors[ImGuiCol_SliderGrab]             = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
-	colors[ImGuiCol_SliderGrabActive]       = ImVec4(0.59f, 0.42f, 0.97f, 1.00f);
-	colors[ImGuiCol_Button]                 = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
-	colors[ImGuiCol_ButtonHovered]          = ImVec4(0.57f, 0.40f, 0.93f, 1.00f);
-	colors[ImGuiCol_ButtonActive]           = ImVec4(0.59f, 0.42f, 0.97f, 1.00f);
-	colors[ImGuiCol_Header]                 = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_HeaderHovered]          = ImVec4(0.57f, 0.40f, 0.93f, 1.00f);
-	colors[ImGuiCol_HeaderActive]           = ImVec4(0.59f, 0.42f, 0.97f, 1.00f);
-	colors[ImGuiCol_Separator]              = ImVec4(0.71f, 0.61f, 0.95f, 0.79f);
-	colors[ImGuiCol_SeparatorHovered]       = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
-	colors[ImGuiCol_SeparatorActive]        = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
-	colors[ImGuiCol_ResizeGrip]             = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_ResizeGripHovered]      = ImVec4(0.57f, 0.40f, 0.93f, 1.00f);
-	colors[ImGuiCol_ResizeGripActive]       = ImVec4(0.57f, 0.40f, 0.93f, 1.00f);
-	colors[ImGuiCol_TabHovered]             = ImVec4(0.08f, 0.08f, 0.11f, 1.00f);
-	colors[ImGuiCol_Tab]                    = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
-	colors[ImGuiCol_TabSelected]            = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
-	colors[ImGuiCol_TabSelectedOverline]    = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
-	colors[ImGuiCol_TabDimmed]              = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
-	colors[ImGuiCol_TabDimmedSelected]      = ImVec4(0.11f, 0.10f, 0.15f, 1.00f);
-	colors[ImGuiCol_TabDimmedSelectedOverline]  = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
-	colors[ImGuiCol_DockingPreview]         = ImVec4(0.53f, 0.37f, 0.86f, 1.00f);
-	colors[ImGuiCol_DockingEmptyBg]         = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-	colors[ImGuiCol_PlotLines]              = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
-	colors[ImGuiCol_PlotLinesHovered]       = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
-	colors[ImGuiCol_PlotHistogram]          = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-	colors[ImGuiCol_PlotHistogramHovered]   = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
-	colors[ImGuiCol_TableHeaderBg]          = ImVec4(0.19f, 0.19f, 0.20f, 1.00f);
-	colors[ImGuiCol_TableBorderStrong]      = ImVec4(0.31f, 0.31f, 0.35f, 1.00f);
-	colors[ImGuiCol_TableBorderLight]       = ImVec4(0.23f, 0.23f, 0.25f, 1.00f);
-	colors[ImGuiCol_TableRowBg]             = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_TableRowBgAlt]          = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
-	colors[ImGuiCol_TextLink]               = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-	colors[ImGuiCol_TextSelectedBg]         = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
-	colors[ImGuiCol_DragDropTarget]         = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
-	colors[ImGuiCol_NavHighlight]           = ImVec4(0.71f, 0.61f, 0.95f, 0.79f);
-	colors[ImGuiCol_NavWindowingHighlight]  = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
-	colors[ImGuiCol_NavWindowingDimBg]      = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-	colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(0.00f, 0.00f, 0.00f, 0.39f);
+	m_renderer = new VulkanRenderer(m_mainWindow);
+	Resources::Initialize(m_renderer);
 
-	m_vkContext.Initialize(m_glfwWindow);
-	Resources::Initialize(&m_vkContext);
+	m_windowManager = WindowManager(this);
+	m_dragDropHandler = DragDropHandler(this);
 
-	AddWindowPlugin(WizardWindow::Create());
-	AddWindowPlugin(EditorWindow::Create("untitled.txt"));
+	m_preferences = Preferences(m_mainWindow, m_windowManager);
+	Preferences::GlobalSettings &globalSettings = m_preferences.GetGlobalSettings();
+	globalSettings.SetFont("Crystal Plex Mono");
+	globalSettings.SetColorTheme("Crystal");
 
-	while (!glfwWindowShouldClose(m_glfwWindow))
+	m_windowManager.AddWindow(new ExplorerWindow());
+	m_windowManager.AddWindow(new WizardWindow());
+
+	double currentTime, lastTime;
+	while (m_mainWindow->IsRunning())
 	{
-		glfwPollEvents();
+		currentTime = glfwGetTime(); 
 
-		m_vkContext.BeginFrame();
-
-		ImGui::NewFrame();
-		ImGui::DockSpaceOverViewport();
-
-		//if (ImGui::IsKeyPressed(ImGuiKey_F5)) system("cd ../../ && build.bat");
-		//if (ImGui::IsKeyPressed(ImGuiKey_F6)) system("cd ../../ && run.bat");
-
-		RenderAllWindows();
-		ManageFreedCache();
-
-		ImGui::Render();
-		m_vkContext.EndFrame();
-	}
-
-	m_windows.clear();
-
-	Resources::Shutdown();
-	m_vkContext.Shutdown();
-	ImGui::DestroyContext();
-
-	glfwDestroyWindow(m_glfwWindow);
-	glfwTerminate();
-}
-
-void Application::AddWindowPlugin(std::shared_ptr<WindowPlugin> window)
-{
-	window->m_application = this;
-	window->OnWindowAdded();
-	m_windows.push_back(std::move(window));
-}
-
-void Application::ManageFreedCache(void)
-{
-	if (m_freedWindowIndices.empty())
-		return;
-	
-	for (uint32_t index : m_freedWindowIndices)
-		m_windows.erase(m_windows.begin() + index);
-	
-	m_freedWindowIndices.clear();
-}
-
-void Application::RenderAllWindows(void)
-{
-	for (uint32_t i = 0; i < m_windows.size(); i++)
-	{
-		std::shared_ptr<WindowPlugin> &window = m_windows[i];
-		if (!window)
+		if(currentTime - lastTime < 1.0 / 120.0) 
 			continue;
 
-		if (!window->m_opened)
-			m_freedWindowIndices.push_back(i);
+		lastTime = currentTime;
 
-		window->RenderWindow();
+		glfwPollEvents();
+
+		m_preferences.Refresh();
+		OnRender();
+
+		m_windowManager.ManageFreedCache();
 	}
+
+	m_windowManager.FreeAllWindows();
+
+	Resources::Shutdown();
+	delete m_renderer;
+	ImGui::DestroyContext();
+
+	delete m_mainWindow;
+}
+void Application::SetMainDirectoryPath(const std::filesystem::path &path)
+{
+	m_mainDirectory = path;
+	m_windowManager.ForEachWindowOfType<TerminalWindow>([&](TerminalWindow *terminal) {
+		terminal->SetCurrentDirectoryPath(path);
+	});
 }
 
-std::shared_ptr<WindowPlugin> Application::CheckForWindowWithPath(std::filesystem::path &path)
+void Application::OpenFile(const std::filesystem::path &path)
 {
-	for (std::shared_ptr<WindowPlugin> window : m_windows)
+	if (m_windowManager.CheckForWindowWithPath(path))
 	{
-		std::shared_ptr<EditorWindow> editorWindow = std::dynamic_pointer_cast<EditorWindow>(window);
-
-		if (editorWindow)
-		{
-			if (editorWindow->GetFilePath().string() == path.string())
-				return editorWindow;
-			else
-				continue;
-		}
+        std::string focusTarget = path.filename().string() + "##" + path.string();
+        ImGui::SetWindowFocus(focusTarget.c_str());
+		return;
 	}
-	return nullptr;
+
+	std::filesystem::path extension = path.extension();
+	if (extension == ".png" || extension == ".jpg")
+		m_windowManager.AddWindow(new ImageWindow(path));
+	else
+		m_windowManager.AddWindow(new EditorWindow(path));
 }
 
-ImVec2 Application::GetGlfwWindowPosition(void)
-{
-	int32_t x, y;
-	glfwGetWindowPos(m_glfwWindow, &x, &y);
-	return ImVec2(x, y);
 }
-
-ImVec2 Application::GetGlfwWindowSize(void)
-{
-	int32_t x, y;
-	glfwGetWindowSize(m_glfwWindow, &x, &y);
-	return ImVec2(x, y);
-}
-
-ImVec2 Application::GetMouseCursorPosition(void)
-{
-	double  x, y;
-	glfwGetCursorPos(m_glfwWindow, &x, &y);
-	return ImVec2(x, y);
-}
-
-};

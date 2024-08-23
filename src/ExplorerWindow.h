@@ -1,22 +1,19 @@
 #pragma once
 
-#include "WindowPlugin.h"
+#include "Window.h"
 #include "TextEditor.h"
 
 namespace Crystal
 {
 
-class ExplorerWindow : public WindowPlugin
+class ExplorerWindow : public Window
 {
 public:
-	static std::shared_ptr<ExplorerWindow> Create(const std::filesystem::path &directory);
-	std::filesystem::path &GetDirectory(void) { return m_mainDirectoryPath; }
 	void RenderWindow(void);
 
 private:
-	void RenderBranch(std::filesystem::path &directory);
-
-	std::filesystem::path m_mainDirectoryPath;
+	void RenderBranch(const std::filesystem::path &directory);
+	float m_mainDragDropTargetPosition;
 };
 
 }

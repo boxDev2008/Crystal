@@ -4,7 +4,7 @@
 namespace Crystal
 {
 
-void BuildErrorHandler::ApplyErrorMarkersToAllEditorWindows(std::vector<std::shared_ptr<WindowPlugin>> windows, const std::string& compilerOutput, CompilerType compiler)
+void BuildErrorHandler::ApplyErrorMarkersToAllEditorWindows(WindowManager &wm, const std::string& compilerOutput, CompilerType compiler)
 {
     switch (compiler)
     {
@@ -16,26 +16,20 @@ void BuildErrorHandler::ApplyErrorMarkersToAllEditorWindows(std::vector<std::sha
         break;*/
     }
 
-    for (std::shared_ptr<WindowPlugin> window : windows)
-	{
-		std::shared_ptr<EditorWindow> editorWindow = std::dynamic_pointer_cast<EditorWindow>(window);
-
-		if (!editorWindow)
-            continue;
-
-        std::vector<BuildError> filteredErrors = FilterErrorsByPath(editorWindow->GetFilePath());
+    wm.ForEachWindowOfType<EditorWindow>([&](EditorWindow *window) {
+        std::vector<BuildError> filteredErrors = FilterErrorsByPath(window->GetFilePath());
 
         if (filteredErrors.empty())
+            window->GetTextEditor()->SetErrorMarkers({});
+        else
         {
-            editorWindow->GetTextEditor()->SetErrorMarkers({});
-            continue;
+            TextEditor::ErrorMarkers markers;
+            for (const auto &error : filteredErrors)
+                markers.insert(std::make_pair(error.m_lineNumber - 1, error.m_errorMessage));
+            window->GetTextEditor()->SetErrorMarkers(markers);
         }
+    });
 
-        TextEditor::ErrorMarkers markers;
-        for (const auto &error : filteredErrors)
-            markers.insert(std::make_pair(error.m_lineNumber - 1, error.m_errorMessage));
-        editorWindow->GetTextEditor()->SetErrorMarkers(markers);
-	}
     m_hasAppliedErrorMarkers = true;
 }
 
