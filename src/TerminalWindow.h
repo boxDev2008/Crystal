@@ -25,12 +25,6 @@ public:
         int32_t historyIndex = -1;
     };
 
-    struct CharGlyph
-    {
-        char ch;
-        ImColor color;
-    };
-
     TerminalWindow(void);
     ~TerminalWindow(void);
 
@@ -65,6 +59,7 @@ private:
     std::unique_ptr<ProcessPool> m_processPool;
 
     Vector2 m_cursorPosition;
+
     std::string m_outputBuffer;
     std::string m_lastOutput;
 

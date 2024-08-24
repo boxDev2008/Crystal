@@ -1,7 +1,7 @@
 #include "ImageWindow.h"
 #include "Application.h"
 #include "Resources.h"
-#include "math/lerp.h"
+#include "math/Lerp.h"
 
 #include <iostream>
 

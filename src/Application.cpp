@@ -24,11 +24,6 @@ namespace Crystal
 
 using namespace Math;
 
-static void glfwErrorCallback(int error, const char* description)
-{
-	fprintf(stderr, "GLFW Error %d: %s\n", error, description);
-}
-
 void Application::OnRender(void)
 {
 	ImGuiIO &io = ImGui::GetIO();
@@ -178,10 +173,11 @@ void Application::OnRender(void)
 
 Application::Application(void)
 {
-	glfwSetErrorCallback(glfwErrorCallback);
+	glfwSetErrorCallback([](int error, const char* description) {
+		fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+	});
 
 	PlatformWindowSettings settings = PlatformWindowSettings::Default();
-	settings.iconPath = "res/logo-small.png";
 	m_mainWindow = new PlatformWindow(settings,
 		[&]() { OnRender(); },
 		[&](int32_t count, const char **paths) {

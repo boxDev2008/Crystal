@@ -40,6 +40,11 @@ void WizardWindow::RenderWindow(void)
 
 		ImGui::SetCursorPos(ImVec2(textX, textY));
 		ImGui::TextUnformatted("Drag files or directory here");
+
+		textX = (windowWidth - ImGui::CalcTextSize("https://github.com/boxDev2008/Crystal").x) * 0.5f;
+
+		ImGui::SetCursorPosX(textX);
+		ImGui::TextLinkOpenURL("https://github.com/boxDev2008/Crystal", "https://github.com/boxDev2008/Crystal");
 	}
 	ImGui::End();
 }

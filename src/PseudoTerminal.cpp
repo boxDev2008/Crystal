@@ -1,4 +1,5 @@
 #include "Win32PseudoTerminal.h"
+#include "LinuxPseudoTerminal.h"
 
 namespace Crystal
 {

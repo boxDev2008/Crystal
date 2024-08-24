@@ -187,7 +187,7 @@ void Preferences::GlobalSettings::SetColorTheme(const std::string &name)
     for (const auto &[imguiCol, iniKey] : s_imguiColorMappings)
         imColors[imguiCol] = hexToColor(ini["UserInterface"][iniKey]);
 
-#define EDITOR_COLOR(name) ImColor(hexToColor(ini["Editor"][##name]))
+#define EDITOR_COLOR(_name) ImColor(hexToColor(ini["Editor"][_name]))
 
     m_editorPalette = {
         EDITOR_COLOR("Default"),
@@ -214,7 +214,7 @@ void Preferences::GlobalSettings::SetColorTheme(const std::string &name)
         EDITOR_COLOR("CurrentLineEdge")
     };
 
-#define PLATFORM_COLOR(name) hexToPlatformColor(ini["Platform"][##name])
+#define PLATFORM_COLOR(_name) hexToPlatformColor(ini["Platform"][_name])
 
 #if CRYSTAL_PLATFORM_WINDOWS
     m_mainWindow->SetColors(
@@ -224,7 +224,7 @@ void Preferences::GlobalSettings::SetColorTheme(const std::string &name)
     );
 #endif
 
-    m_wm->ForEachWindowOfType<EditorWindow>([this](EditorWindow *window) {
+    m_wm->ForEachWindowOfType<EditorWindow>([&](EditorWindow *window) {
         TextEditor *editor = window->GetTextEditor();
         editor->SetPalette(m_editorPalette);
     });

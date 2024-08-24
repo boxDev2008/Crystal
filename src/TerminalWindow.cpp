@@ -7,6 +7,7 @@
 #include "imgui_internal.h"
 
 #include <stdio.h>
+
 #include <codecvt>
 #include <fstream>
 #include <sstream>
@@ -16,10 +17,11 @@
 #if CRYSTAL_PLATFORM_WINDOWS
     #include <windows.h>
     #include <TlHelp32.h>
-#elif CYSTAL_PLATFORM_LINUX
+#elif CRYSTAL_PLATFORM_LINUX
     #include <sys/types.h>
     #include <dirent.h>
     #include <unistd.h>
+    #include <signal.h>
 #endif
 
 namespace Crystal
@@ -163,6 +165,7 @@ void TerminalWindow::OnWindowAdded(void)
 std::string TerminalWindow::ParseAnsiEscapeCodes(const std::string &input)
 {
     std::string result;
+    std::string formatedString;
     size_t i = 0;
     while (i < input.size())
     {
@@ -278,6 +281,7 @@ void TerminalWindow::SetCurrentDirectoryPath(const std::filesystem::path &path)
 
     m_pseudoTerminal->ReadOutput([this](const char *bytes, size_t size) {
         std::string buffer = std::string(bytes, size);
+        //auto formatedBuffer = ParseAnsiEscapeCodesColored(buffer);
         buffer = ParseAnsiEscapeCodes(buffer);
         m_outputBuffer += buffer;
         m_lastOutput += buffer;
@@ -361,7 +365,7 @@ void TerminalWindow::RenderWindow(void)
             gyatt->BufDirty = true;
             gyatt->BufTextLen = 0;
             gyatt->CursorPos = 0;
-            strset(gyatt->Buf, 0);
+            memset(gyatt->Buf, 0, strlen(gyatt->Buf));
         };
 
         switch (gyatt->EventKey)
