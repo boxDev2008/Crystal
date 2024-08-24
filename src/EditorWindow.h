@@ -38,7 +38,7 @@ private:
 		friend class EditorWindow;
 	};
 
-	void GetCurrentWord(std::string &word, int &start, int &end);
+	// void GetCurrentWord(std::string &word, int &start, int &end);
 
 	bool m_saved = true;
 	TextEditor m_editor;

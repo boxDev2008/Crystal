@@ -129,9 +129,9 @@ void EditorWindow::OnWindowAdded(void)
 	m_editor.SetErrorMarkers(markers);
 }
 
-void EditorWindow::GetCurrentWord(std::string &word, int& start, int& end)
+/*void EditorWindow::GetCurrentWord(std::string &word, int& start, int& end)
 {
-    /*std::string line = m_editor.GetCurrentLineText();
+    std::string line = m_editor.GetCurrentLineText();
     const int cursorPosition = m_editor.GetCursorPosition().mColumn;
 
 	line = ConvertTabsToSpaces(line, m_editor.GetTabSize());
@@ -166,8 +166,8 @@ void EditorWindow::GetCurrentWord(std::string &word, int& start, int& end)
     if (start < end && start >= 0 && end <= line.size())
         word = line.substr(start, end - start);
     else
-        word.clear();*/
-}
+        word.clear();
+}*/
 
 void EditorWindow::RenderWindow(void)
 {

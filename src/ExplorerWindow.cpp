@@ -72,12 +72,14 @@ std::unordered_map<std::string, std::string> s_iconMap = {
     { ".bin", "binary" },
     { ".exe", "binary" },
     { ".glsl", "glsl" },
-    { ".gitignore", "git" }
+    { ".gitignore", "git" },
+    { "makefile", "makefile" },
+    { "Makefile", "makefile" }
 };
 
 namespace fs = std::filesystem;
 
-static bool FileTreeNode(const char *label, const std::string &extension, const fs::path &path)
+static bool FileTreeNode(const char *label, const fs::path &path)
 {
     const ImGuiStyle& style = ImGui::GetStyle();
 
@@ -92,13 +94,13 @@ static bool FileTreeNode(const char *label, const std::string &extension, const 
 
     ImGui::SameLine(x);
 
-    std::string iconTag = s_iconMap[extension];
-    if (iconTag.empty())
+    std::string iconTag = s_iconMap[path.extension().string()];
+    if (iconTag.empty() && (iconTag = s_iconMap[path.filename().string()]).empty())
         iconTag = "file";
 
     float scale = ImGui::GetFontSize()+style.FramePadding.y * 0.5f;
     ImGui::Image(Resources::GetTextureByName(iconTag).id, ImVec2(scale, scale),
-        ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), style.Colors[ImGuiCol_Text]);
+        ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f));
 
     ImGui::SameLine();
     ImGui::Text(label);
@@ -137,7 +139,7 @@ static bool DirectoryTreeNode(const char* label, const fs::path &path)
     float scale = ImGui::GetFontSize()+style.FramePadding.y * 0.5f;
     ImGui::Image(opened ? Resources::GetTextureByName("folder_open").id :
         Resources::GetTextureByName("folder").id, ImVec2(scale, scale),
-        ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), style.Colors[ImGuiCol_Text]);
+        ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f));
 
     ImGui::SameLine();
     ImGui::Text(label);
@@ -198,8 +200,7 @@ void ExplorerWindow::RenderBranch(const fs::path &directory)
 
         if (fs::is_regular_file(path))
         {
-            std::string extension = path.filename().extension().string();
-            if (FileTreeNode(path.filename().string().c_str(), extension, path))
+            if (FileTreeNode(path.filename().string().c_str(), path))
                 m_application->OpenFile(path);
 
             if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
