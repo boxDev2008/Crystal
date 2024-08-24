@@ -16,7 +16,9 @@
 namespace Crystal
 {
 
-std::unordered_map<std::string, std::string> s_iconMap = {
+namespace fs = std::filesystem;
+
+std::unordered_map<fs::path, std::string> s_iconMap = {
     { ".txt", "txt" },
     { ".ini", "conf" },
     { ".cfg", "conf" },
@@ -77,8 +79,6 @@ std::unordered_map<std::string, std::string> s_iconMap = {
     { "Makefile", "makefile" }
 };
 
-namespace fs = std::filesystem;
-
 static bool FileTreeNode(const char *label, const fs::path &path)
 {
     const ImGuiStyle& style = ImGui::GetStyle();
@@ -94,8 +94,8 @@ static bool FileTreeNode(const char *label, const fs::path &path)
 
     ImGui::SameLine(x);
 
-    std::string iconTag = s_iconMap[path.extension().string()];
-    if (iconTag.empty() && (iconTag = s_iconMap[path.filename().string()]).empty())
+    std::string iconTag = s_iconMap[path.extension()];
+    if (iconTag.empty() && (iconTag = s_iconMap[path.filename()]).empty())
         iconTag = "file";
 
     float scale = ImGui::GetFontSize()+style.FramePadding.y * 0.5f;

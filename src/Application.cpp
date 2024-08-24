@@ -65,7 +65,7 @@ void Application::OnRender(void)
 		if (ImGui::BeginMenu("File"))
 		{
 			if (ImGui::MenuItem("Open File", "Ctrl+O"))
-			{ 
+			{
 				IGFD::FileDialogConfig config;
 				config.flags = ImGuiFileDialogFlags_Modal;
 				config.path = ".";
