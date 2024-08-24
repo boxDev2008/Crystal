@@ -9,9 +9,6 @@
 #include "SuggestionHandler.h"
 #include "LayoutHandler.h"
 #include "DragDropHandler.h"
-#include "lsp/LspHandler.h"
-
-#include <vector>
 
 namespace Crystal
 {
@@ -46,7 +43,7 @@ private:
 	LayoutHandler m_layoutHandler;
 	Preferences m_preferences;
 
-	std::unique_ptr<LspHandler> m_lspHandler;
+	//std::unique_ptr<LspHandler> m_lspHandler;
 
 	Renderer *m_renderer;
 	WindowManager m_windowManager;

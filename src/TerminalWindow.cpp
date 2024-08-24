@@ -1,8 +1,7 @@
 #include "TerminalWindow.h"
 #include "Application.h"
+#include "Resources.h"
 #include "Utils.h"
-#include <algorithm>
-#include <cmath>
 
 #include "imgui_internal.h"
 
@@ -396,7 +395,7 @@ void TerminalWindow::RenderWindow(void)
 
 	ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetBottomDockID(), ImGuiCond_Appearing);
 
-    std::string title = "Terminal - cmd.exe ##" + std::to_string((uintptr_t)this);
+    std::string title = " Terminal - cmd.exe ##" + std::to_string((uintptr_t)this);
     if (ImGui::Begin(title.c_str(), &m_opened, ImGuiWindowFlags_NoNav))
     {
         ImGuiStyle &style = ImGui::GetStyle();

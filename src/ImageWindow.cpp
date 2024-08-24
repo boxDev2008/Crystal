@@ -41,6 +41,8 @@ void ImageWindow::RenderWindow(void)
 
         Vector2 imageSize = Vector2(m_texture->width, m_texture->height) * m_smoothZoomFactor * windowSize.x / m_texture->width;
         Vector2 imagePos = (windowSize - imageSize) * 0.5f  + m_offset;
+        
+        const bool isHovered = ImGui::IsWindowHovered();
 
         if (ImGui::IsWindowFocused())
         {
@@ -50,7 +52,7 @@ void ImageWindow::RenderWindow(void)
 				if (ImGui::IsKeyPressed(ImGuiKey_Equal)) m_zoomFactor *= 1.2f;
 				else if (ImGui::IsKeyPressed(ImGuiKey_Minus)) m_zoomFactor *= 0.8f;
 
-            if (ImGui::IsWindowDocked() && ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+            if (isHovered && ImGui::IsWindowDocked() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
             {
                 Vector2 mouseDragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
                 m_offset += mouseDragDelta;
@@ -58,7 +60,7 @@ void ImageWindow::RenderWindow(void)
             }
         }
 
-        if (ImGui::IsWindowHovered())
+        if (isHovered)
         {
             float wheel = io.MouseWheel;
             if (wheel > 0)
