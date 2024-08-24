@@ -22,11 +22,12 @@ Run `.\run.bat` or just cd into the `bin/Release` folder (On Windows)
 ## Features
 - [x] Typing
 - [x] File Explorer
-- [x] Syntax highlighting (for C++)
+- [x] Syntax highlighting
 - [x] Lightweight
-- [x] Code suggestions
-- [x] Build error markers (compile-time)
+- [x] Build error markers (compile-time, msvc only)
 - [x] Basic terminal
-- [ ] Drag and drop files
-- [ ] Image viewer
-- [ ] Customizable themes
+- [x] Drag and drop files
+- [x] Image viewer (png, jpg)
+- [x] Customizable themes
+- [x] File icons
+- [ ] Lsp support
