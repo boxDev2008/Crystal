@@ -27,6 +27,19 @@ struct Vector2
 
     bool operator==(const Vector2& other) const;
     bool operator!=(const Vector2& other) const;
+
+    static float Angle(const Vector2& from, const Vector2& to);
+    static float SignedAngle(const Vector2& from, const Vector2& to);
+    static float Distance(const Vector2& lhs, const Vector2& rhs);
+    static float Dot(const Vector2& lhs, const Vector2& rhs);
+    static Vector2 Lerp(const Vector2& a, const Vector2& b, float t);
+    static Vector2 FromAngle(float angle);
+    static Vector2 Max(const Vector2& lhs, const Vector2& rhs);
+    static Vector2 Min(const Vector2& lhs, const Vector2& rhs);
+    static float Heading(const Vector2& vector);
+    static float Magnitude(const Vector2& vector);
+    static float SqrMagnitude(const Vector2& vector);
+    static Vector2 Vector2::Normalize(const Vector2& vector);
 };
 
 Vector2 operator*(float scalar, const Vector2& vec);
