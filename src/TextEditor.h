@@ -191,7 +191,7 @@ public:
 	void SetLineSpacing(float aValue);
 	inline float GetLineSpacing() const { return mLineSpacing;  }
 
-	void RefreshScrollPosition();
+	void UninitializeSmoothScroll();
 
 	void SelectAll();
 	void SelectLine(int aLine);
@@ -405,6 +405,8 @@ private:
 	void Colorize(int aFromLine = 0, int aCount = -1);
 	void ColorizeRange(int aFromLine = 0, int aToLine = 0);
 	void ColorizeInternal();
+
+	void RefreshScrollPosition();
 
 	std::vector<Line> mLines;
 	EditorState mState;

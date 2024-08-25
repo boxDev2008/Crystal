@@ -35,6 +35,8 @@ public:
         int32_t fbWidth, fbHeight;
         int32_t mouseX, mouseY;
         bool shouldClose = false;
+        bool resizing = false;
+        bool moving = false;
         std::function<void()> onResizeCallback;
         std::function<void(int32_t count, const char **paths)> onDragFilesCallback;
     };
@@ -57,10 +59,17 @@ public:
     const Vector2 GetMousePosition(void) const { return Vector2(m_data.mouseX, m_data.mouseY); }
     
     bool IsRunning(void) { return !m_data.shouldClose; }
+    bool IsResizing(void) { return m_data.resizing; }
+    bool IsMoving(void) { return m_data.moving; }
+
+protected:
+    void PollEvents(void);
 
 private:
     GLFWwindow *m_window;
     WindowData m_data;
+
+    friend class Application;
 };
 
 }

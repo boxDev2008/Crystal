@@ -120,6 +120,10 @@ void EditorWindow::RenderWindow(void)
 	//int start, end;
 	//ImVec2 windowPosition;
 
+	PlatformWindow &mainWindow = m_application->GetMainWindow();
+	if (mainWindow.IsResizing() || mainWindow.IsMoving())
+		m_editor.UninitializeSmoothScroll();
+
 	ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetMainDockID(), ImGuiCond_Appearing);
 	if (ImGui::Begin(c_title, &m_opened))
 	{

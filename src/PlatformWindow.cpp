@@ -58,6 +58,7 @@ PlatformWindow::PlatformWindow(
 		WindowData &data = *(WindowData*)glfwGetWindowUserPointer(window);
 		data.x = x;
 		data.y = y;
+		data.moving = true;
 	});
 
 	glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int32_t width, int32_t height)
@@ -65,6 +66,7 @@ PlatformWindow::PlatformWindow(
 		WindowData &data = *(WindowData*)glfwGetWindowUserPointer(window);
 		data.width = width;
 		data.height = height;
+		data.resizing = true;
 	});
 
 	glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* window, int32_t width, int32_t height)
@@ -101,6 +103,13 @@ PlatformWindow::~PlatformWindow(void)
 
     if (--window_count == 0)
         glfwTerminate();
+}
+
+void PlatformWindow::PollEvents(void)
+{
+	m_data.resizing = false;
+	m_data.moving = false;
+	glfwPollEvents();
 }
 
 void PlatformWindow::SetColors(unsigned long titlebar, unsigned long border, unsigned long text)

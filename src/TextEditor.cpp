@@ -5,8 +5,8 @@
 
 #include "TextEditor.h"
 
-#include "Math/Math.h"
-#include "Math/Vector2.h"
+#include "math/Math.h"
+#include "math/Vector2.h"
 
 #define IMGUI_SCROLLBAR_WIDTH 14.0f
 #define POS_TO_COORDS_COLUMN_OFFSET 0.33f
@@ -2217,6 +2217,11 @@ void TextEditor::UpdateViewVariables(float aScrollX, float aScrollY)
 	mLastVisibleColumn = Max((int)((mContentWidth + aScrollX - mTextStart) / mCharAdvance.x), 0);
 }
 
+void TextEditor::UninitializeSmoothScroll()
+{
+	mSmoothScrollInitialized = false;
+}
+
 void TextEditor::RefreshScrollPosition()
 {
 	mSmoothCursorScreenPos = ImGui::GetCursorScreenPos();
@@ -2255,8 +2260,7 @@ void TextEditor::Render(bool aParentIsFocused)
 		const float deltaTime = ImGui::GetIO().DeltaTime;
 		static const float speedFactor = 20.0f;
 	
-		if (deltaTime > 0.05f ||
-			(ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && ImGui::IsMouseDragging(0)))
+		if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && ImGui::IsMouseDragging(0))
 			RefreshScrollPosition();
 		else
 		{

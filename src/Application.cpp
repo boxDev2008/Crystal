@@ -252,7 +252,7 @@ Application::Application(void)
 
 		lastTime = currentTime;
 
-		glfwPollEvents();
+		m_mainWindow->PollEvents();
 
 		m_preferences.Refresh();
 		OnRender();
@@ -286,7 +286,8 @@ void Application::OpenFile(const std::filesystem::path &path)
 	}
 
 	std::filesystem::path extension = path.extension();
-	if (extension == ".png" || extension == ".jpg")
+	if (extension == ".png" || extension == ".jpg" ||
+		extension == ".psd" || extension == ".gif")
 		m_windowManager.AddWindow(new ImageWindow(path));
 	else
 		m_windowManager.AddWindow(new EditorWindow(path));
