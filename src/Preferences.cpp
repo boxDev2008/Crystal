@@ -1,7 +1,7 @@
 #include "Preferences.h"
 #include "EditorWindow.h"
 #include "Utils.h"
-#include "math/Lerp.h"
+#include "math/Math.h"
 
 #include <mini/ini.h>
 

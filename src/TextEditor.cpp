@@ -5,7 +5,7 @@
 
 #include "TextEditor.h"
 
-#include "math/Lerp.h"
+#include "math/Math.h"
 #include "math/Vector2.h"
 
 #define IMGUI_SCROLLBAR_WIDTH 14.0f
