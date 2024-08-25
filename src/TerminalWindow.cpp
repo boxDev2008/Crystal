@@ -272,12 +272,16 @@ void TerminalWindow::SetCurrentDirectoryPath(const std::filesystem::path &path)
 
     m_processPool = std::make_unique<ProcessPool>();
 
+    char shellName[64];
 #ifdef CRYSTAL_PLATFORM_WINDOWS
-    m_pseudoTerminal = PseudoTerminal::Create("cmd.exe", path);
+    strcpy(shellName, "cmd.exe");
 #elif CRYSTAL_PLATFORM_LINUX
-    m_pseudoTerminal = PseudoTerminal::Create("bash", path);
+    strcpy(shellName, "bash");
 #endif
 
+    sprintf(m_windowTitle, "%s - %s##%lu", "Terminal", shellName, (uintptr_t)this);
+
+    m_pseudoTerminal = PseudoTerminal::Create(shellName, path);
     m_pseudoTerminal->ReadOutput([this](const char *bytes, size_t size) {
         std::string buffer = std::string(bytes, size);
         //auto formatedBuffer = ParseAnsiEscapeCodesColored(buffer);
@@ -395,8 +399,7 @@ void TerminalWindow::RenderWindow(void)
 
 	ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetBottomDockID(), ImGuiCond_Appearing);
 
-    std::string title = " Terminal - cmd.exe ##" + std::to_string((uintptr_t)this);
-    if (ImGui::Begin(title.c_str(), &m_opened, ImGuiWindowFlags_NoNav))
+    if (ImGui::Begin(m_windowTitle, &m_opened, ImGuiWindowFlags_NoNav))
     {
         ImGuiStyle &style = ImGui::GetStyle();
         ImGui::PushStyleColor(ImGuiCol_ChildBg, {0.0f, 0.0f, 0.0f, 0.0f});

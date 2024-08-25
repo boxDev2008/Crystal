@@ -63,6 +63,8 @@ private:
     std::string m_outputBuffer;
     std::string m_lastOutput;
 
+    char m_windowTitle[128];
+
     bool m_busy = false;
     char m_inputBuffer[256] = "";
 };

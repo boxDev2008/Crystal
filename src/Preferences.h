@@ -59,6 +59,7 @@ public:
         bool showWhitespaces = false;
         bool shortTabs = false;
         bool autoIndent = true;
+        bool smoothScroll = false;
     };
 
     Preferences(void) = default;

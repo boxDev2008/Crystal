@@ -191,6 +191,7 @@ void EditorWindow::RenderWindow(void)
 		m_editor.SetShowWhitespacesEnabled(settings.showWhitespaces);
 		m_editor.SetShortTabsEnabled(settings.shortTabs);
 		m_editor.SetAutoIndentEnabled(settings.autoIndent);
+		m_editor.SetSmoothScrollEnabled(settings.smoothScroll);
 
 		//m_findReplaceHandler.Render(m_editor);
 

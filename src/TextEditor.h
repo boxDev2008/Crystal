@@ -177,6 +177,8 @@ public:
 	inline bool IsShowLineNumbersEnabled() const { return mShowLineNumbers; }
 	inline void SetShortTabsEnabled(bool aValue) { mShortTabs = aValue; }
 	inline bool IsShortTabsEnabled() const { return mShortTabs; }
+	inline void SetSmoothScrollEnabled(bool aValue) { mSmoothScroll = aValue; }
+	inline bool IsSmoothScrollEnabled() const { return mSmoothScroll; }
 	inline int GetLineCount() const { return mLines.size(); }
 	inline bool IsOverwriteEnabled() const { return mOverwrite; }
 	void SetPalette(const Palette &aValue);
@@ -188,6 +190,8 @@ public:
 	inline int GetTabSize() const { return mTabSize; }
 	void SetLineSpacing(float aValue);
 	inline float GetLineSpacing() const { return mLineSpacing;  }
+
+	void RefreshScrollPosition();
 
 	void SelectAll();
 	void SelectLine(int aLine);
@@ -415,6 +419,7 @@ private:
 	bool mShowWhitespaces = false;
 	bool mShowLineNumbers = false;
 	bool mShortTabs = false;
+	bool mSmoothScroll = true;
 
 	int mSetViewAtLine = -1;
 	SetViewAtLineMode mSetViewAtLineMode;
@@ -445,6 +450,9 @@ private:
 	bool mCursorPositionChanged = false;
 	bool mCursorOnBracket = false;
 	Coordinates mMatchingBracketCoords;
+
+	ImVec2 mSmoothCursorScreenPos{0.0f, 0.0f};
+	bool mSmoothScrollInitialized = false;
 
 	int mColorRangeMin = 0;
 	int mColorRangeMax = 0;

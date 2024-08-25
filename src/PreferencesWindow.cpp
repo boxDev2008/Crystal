@@ -63,6 +63,7 @@ void PreferencesWindow::RenderWindow(void)
                 ImGui::Checkbox("Short Tabs", &settings.shortTabs);
             }
             ImGui::Checkbox("Auto Indent", &settings.autoIndent);
+            ImGui::Checkbox("Smooth Scroll (Experimental)", &settings.smoothScroll);
             ImGui::PopStyleVar();
 
             ImGui::TextUnformatted("Tab Size");

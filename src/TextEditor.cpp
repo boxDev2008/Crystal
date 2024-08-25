@@ -5,6 +5,9 @@
 
 #include "TextEditor.h"
 
+#include "math/Lerp.h"
+#include "math/Vector2.h"
+
 #define IMGUI_SCROLLBAR_WIDTH 14.0f
 #define POS_TO_COORDS_COLUMN_OFFSET 0.33f
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -2214,6 +2217,13 @@ void TextEditor::UpdateViewVariables(float aScrollX, float aScrollY)
 	mLastVisibleColumn = Max((int)((mContentWidth + aScrollX - mTextStart) / mCharAdvance.x), 0);
 }
 
+void TextEditor::RefreshScrollPosition()
+{
+	mSmoothCursorScreenPos = ImGui::GetCursorScreenPos();
+	mScrollX = ImGui::GetScrollX();
+	mScrollY = ImGui::GetScrollY();
+}
+
 void TextEditor::Render(bool aParentIsFocused)
 {
 	/* Compute mCharAdvance regarding to scaled font size (Ctrl + mouse wheel)*/
@@ -2230,9 +2240,39 @@ void TextEditor::Render(bool aParentIsFocused)
 		mTextStart += ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, lineNumberBuffer, nullptr, nullptr).x;
 	}
 
-	ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
-	mScrollX = ImGui::GetScrollX();
-	mScrollY = ImGui::GetScrollY();
+	if (mSmoothScroll)
+	{
+		ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+
+		if (!mSmoothScrollInitialized)
+		{
+			mScrollX = ImGui::GetScrollX();
+			mScrollY = ImGui::GetScrollY();
+			mSmoothCursorScreenPos = cursorScreenPos;
+			mSmoothScrollInitialized = true;
+		}
+
+		const float deltaTime = ImGui::GetIO().DeltaTime;
+		static const float speedFactor = 20.0f;
+	
+		if (deltaTime > 0.05f ||
+			(ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && ImGui::IsMouseDragging(0)))
+			RefreshScrollPosition();
+		else
+		{
+			using namespace Crystal::Math;
+			const float smoothScrollSpeed = deltaTime * speedFactor;
+
+			mSmoothCursorScreenPos.x = lerp(mSmoothCursorScreenPos.x, cursorScreenPos.x, smoothScrollSpeed);
+			mSmoothCursorScreenPos.y = lerp(mSmoothCursorScreenPos.y, cursorScreenPos.y, smoothScrollSpeed);
+
+			mScrollX = lerp(mScrollX, ImGui::GetScrollX(), smoothScrollSpeed);
+			mScrollY = lerp(mScrollY, ImGui::GetScrollY(), smoothScrollSpeed);
+		}
+	}
+	else
+		RefreshScrollPosition();
+	
 	UpdateViewVariables(mScrollX, mScrollY);
 
 	int maxColumnLimited = 0;
@@ -2243,7 +2283,7 @@ void TextEditor::Render(bool aParentIsFocused)
 
 		for (int lineNo = mFirstVisibleLine; lineNo <= mLastVisibleLine && lineNo < mLines.size(); lineNo++)
 		{
-			ImVec2 lineStartScreenPos = ImVec2(cursorScreenPos.x, cursorScreenPos.y + lineNo * mCharAdvance.y);
+			ImVec2 lineStartScreenPos = ImVec2(mSmoothCursorScreenPos.x, mSmoothCursorScreenPos.y + lineNo * mCharAdvance.y);
 			ImVec2 textScreenPos = ImVec2(lineStartScreenPos.x + mTextStart, lineStartScreenPos.y);
 
 			auto& line = mLines[lineNo];
