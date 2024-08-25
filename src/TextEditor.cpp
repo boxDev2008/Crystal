@@ -2263,11 +2263,11 @@ void TextEditor::Render(bool aParentIsFocused)
 			using namespace Crystal::Math;
 			const float smoothScrollSpeed = deltaTime * speedFactor;
 
-			mSmoothCursorScreenPos.x = lerp(mSmoothCursorScreenPos.x, cursorScreenPos.x, smoothScrollSpeed);
-			mSmoothCursorScreenPos.y = lerp(mSmoothCursorScreenPos.y, cursorScreenPos.y, smoothScrollSpeed);
+			mSmoothCursorScreenPos.x = Lerp(mSmoothCursorScreenPos.x, cursorScreenPos.x, smoothScrollSpeed);
+			mSmoothCursorScreenPos.y = Lerp(mSmoothCursorScreenPos.y, cursorScreenPos.y, smoothScrollSpeed);
 
-			mScrollX = lerp(mScrollX, ImGui::GetScrollX(), smoothScrollSpeed);
-			mScrollY = lerp(mScrollY, ImGui::GetScrollY(), smoothScrollSpeed);
+			mScrollX = Lerp(mScrollX, ImGui::GetScrollX(), smoothScrollSpeed);
+			mScrollY = Lerp(mScrollY, ImGui::GetScrollY(), smoothScrollSpeed);
 		}
 	}
 	else

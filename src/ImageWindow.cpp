@@ -32,7 +32,7 @@ void ImageWindow::RenderWindow(void)
 	static Vector2 dragStart;
 	
 	ImGuiIO &io = ImGui::GetIO();
-	m_smoothZoomFactor = Math::lerp(m_smoothZoomFactor, m_zoomFactor, io.DeltaTime * 15.0f);
+	m_smoothZoomFactor = Math::Lerp(m_smoothZoomFactor, m_zoomFactor, io.DeltaTime * 15.0f);
 
     ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetMainDockID(), ImGuiCond_FirstUseEver);
     if (ImGui::Begin(c_title, &m_opened, ImGuiWindowFlags_NoScrollWithMouse))
