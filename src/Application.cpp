@@ -5,7 +5,7 @@
 #include "ImageWindow.h"
 #include "PreferencesWindow.h"
 #include "Resources.h"
-#include "rendering/VulkanRenderer.h"
+#include "Rendering/VulkanRenderer.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -14,10 +14,6 @@
 #include "ExplorerWindow.h"
 #include "TerminalWindow.h"
 #include "Utils.h"
-#include <filesystem>
-
-#include <algorithm>
-#include <sstream>
 
 namespace Crystal
 {
@@ -93,6 +89,8 @@ void Application::OnRender(void)
 			{
 				if (!m_windowManager.CheckForWindowOfType<PreferencesWindow>())
 					m_windowManager.AddWindow(new PreferencesWindow());
+				else
+					ImGui::SetWindowFocus("Preferences##Preferences");
 			}
 			ImGui::EndMenu();
 		}

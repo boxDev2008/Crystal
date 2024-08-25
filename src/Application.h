@@ -3,7 +3,7 @@
 #include "WindowManager.h"
 #include "PlatformWindow.h"
 #include "Preferences.h"
-#include "rendering/Renderer.h"
+#include "Rendering/Renderer.h"
 
 #include "BuildErrorHandler.h"
 #include "SuggestionHandler.h"

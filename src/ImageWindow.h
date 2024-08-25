@@ -3,8 +3,8 @@
 #include "Window.h"
 #include "WindowPathContainer.h"
 
-#include "math/Vector2.h"
-#include "rendering/Renderer.h"
+#include "Math/Vector2.h"
+#include "Rendering/Renderer.h"
 
 namespace Crystal
 {

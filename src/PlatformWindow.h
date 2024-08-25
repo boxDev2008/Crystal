@@ -1,7 +1,7 @@
 #pragma once
 
 #include "imgui.h"
-#include "math/Vector2.h"
+#include "Math/Vector2.h"
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN

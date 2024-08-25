@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Window.h"
-#include "rendering/Renderer.h"
+#include "Rendering/Renderer.h"
 
 namespace Crystal
 {

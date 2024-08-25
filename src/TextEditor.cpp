@@ -5,8 +5,8 @@
 
 #include "TextEditor.h"
 
-#include "math/Math.h"
-#include "math/Vector2.h"
+#include "Math/Math.h"
+#include "Math/Vector2.h"
 
 #define IMGUI_SCROLLBAR_WIDTH 14.0f
 #define POS_TO_COORDS_COLUMN_OFFSET 0.33f

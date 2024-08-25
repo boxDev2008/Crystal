@@ -12,8 +12,9 @@ void PreferencesWindow::RenderWindow(void)
     using Vector2 = Crystal::Math::Vector2;
     Preferences &preferences = m_application->GetPreferences();
 
-    ImGui::SetNextWindowSize(Vector2(600, 700), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("Preferences", &m_opened, 0))
+    //ImGui::SetNextWindowSize(Vector2(600, 700), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetMainDockID(), ImGuiCond_Appearing);
+    if (ImGui::Begin("Preferences##Preferences", &m_opened, 0))
     {
         /*ImGui::BeginChild("LeftPanel", Vector2(ImGui::GetWindowSize().x * 0.25f, 0), true);
         ImGui::EndChild();
@@ -44,6 +45,7 @@ void PreferencesWindow::RenderWindow(void)
                 settings.SetColorTheme(themes[m_selectedTheme]);
         }
 
+        ImGui::NewLine();
         ImGui::TextColored(headerColor, "UI Settings");
         {
             Preferences::UISettings &settings = preferences.GetUISettings();
@@ -51,6 +53,7 @@ void PreferencesWindow::RenderWindow(void)
             ImGui::DragFloat("##IndentSpacing", &settings.indentSpacing, 0.1f, 0.0f, FLT_MAX, "%.1f");
         }
 
+        ImGui::NewLine();
         ImGui::TextColored(headerColor, "Editor Settings");
         {
             Preferences::EditorSettings &settings = preferences.GetEditorSettings();

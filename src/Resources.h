@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rendering/Renderer.h"
+#include "Rendering/Renderer.h"
 
 #include <iostream>
 
