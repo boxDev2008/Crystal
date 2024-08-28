@@ -15,10 +15,10 @@
 #include "TerminalWindow.h"
 #include "Utils.h"
 
+#include <nlohmann/json.hpp>
+
 namespace Crystal
 {
-
-using namespace Math;
 
 void Application::OnRender(void)
 {
@@ -50,7 +50,7 @@ void Application::OnRender(void)
 		}
 		else if (ImGui::IsKeyPressed(ImGuiKey_S, false))
 		{
-			EditorWindow *window = dynamic_cast<EditorWindow*>(m_windowManager.GetLastWindow());
+			EditorWindow *window = dynamic_cast<EditorWindow*>(m_windowManager.GetLastEditorWindow());
 			if (window) window->SaveToFile();
 		}
 	}
@@ -78,7 +78,7 @@ void Application::OnRender(void)
 			}
 			if (ImGui::MenuItem("Save", "Ctrl+S"))
 			{
-				EditorWindow *window = dynamic_cast<EditorWindow*>(m_windowManager.GetLastWindow());
+				EditorWindow *window = dynamic_cast<EditorWindow*>(m_windowManager.GetLastEditorWindow());
 				if (window) window->SaveToFile();
 			}
 			ImGui::EndMenu();
@@ -120,8 +120,8 @@ void Application::OnRender(void)
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 
-		Vector2 p1 = Vector2(window->Pos.x, window->Pos.y + window->Size.y - 1);
-		Vector2 p2 = Vector2(window->Pos.x + window->Size.x, window->Pos.y + window->Size.y - 1);
+		ImVec2 p1 = ImVec2(window->Pos.x, window->Pos.y + window->Size.y - 1);
+		ImVec2 p2 = ImVec2(window->Pos.x + window->Size.x, window->Pos.y + window->Size.y - 1);
 
 		drawList->AddLine(p1, p2, ImColor(style.Colors[ImGuiCol_Border]), style.WindowBorderSize);
 
@@ -182,7 +182,7 @@ Application::Application(void)
 		if (count == 1 && !std::filesystem::is_regular_file(paths[0]) && paths[0] != GetMainDirectoryPath())
 		{
 			const char *path = paths[0];
-			SetMainDirectoryPath(path);		
+			SetMainDirectoryPath(path);
 			return;
 		}
 
@@ -210,7 +210,7 @@ Application::Application(void)
 	//io.ConfigViewportsNoTaskBarIcon = true;
 
 	io.IniFilename = nullptr;
-          
+
 	ImGuiStyle &style = ImGui::GetStyle();
 	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{
@@ -234,10 +234,7 @@ Application::Application(void)
 	m_windowManager = WindowManager(this);
 	m_dragDropHandler = DragDropHandler(this);
 
-	m_preferences = Preferences(m_mainWindow, m_windowManager);
-	Preferences::GlobalSettings &globalSettings = m_preferences.GetGlobalSettings();
-	globalSettings.SetFont("Crystal Plex Mono");
-	globalSettings.SetColorTheme("Crystal");
+	m_preferences = std::make_unique<Preferences>(m_mainWindow, m_windowManager);
 
 	m_windowManager.AddWindow(new ExplorerWindow());
 	m_windowManager.AddWindow(new WizardWindow());
@@ -254,7 +251,7 @@ Application::Application(void)
 
 		m_mainWindow->PollEvents();
 
-		m_preferences.Refresh();
+		m_preferences->Refresh();
 		OnRender();
 
 		m_windowManager.ManageFreedCache();

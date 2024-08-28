@@ -16,8 +16,6 @@ namespace Crystal
 #define APP_USE_VULKAN_DEBUG_REPORT
 #endif
 
-using namespace Crystal::Math;
-
 struct VulkanTexture : public Texture
 {
 	VkImage image;
@@ -368,7 +366,7 @@ VulkanRenderer::VulkanRenderer(PlatformWindow *window)
 	VkResult err = glfwCreateWindowSurface(m_instance, window->GetGlfwHandle(), m_allocator, &surface);
 	check_vk_result(err);
 
-    Vector2 fbSize = window->GetFramebufferSize();
+    ImVec2 fbSize = window->GetFramebufferSize();
 	ImGui_ImplVulkanH_Window* wd = &m_mainWindowData;
 	SetupVulkanWindow(wd, surface, fbSize.x, fbSize.y);
 
@@ -404,7 +402,7 @@ VulkanRenderer::~VulkanRenderer(void)
 
 void VulkanRenderer::BeginFrame(void)
 {
-    Vector2 fbSize = m_window->GetFramebufferSize();
+    ImVec2 fbSize = m_window->GetFramebufferSize();
     if ((int32_t)fbSize.x > 0 && (int32_t)fbSize.y > 0 && (m_swapChainRebuild || m_mainWindowData.Width != (int32_t)fbSize.x || m_mainWindowData.Height != (int32_t)fbSize.y))
     {
         ImGui_ImplVulkan_SetMinImageCount(m_minImageCount);
@@ -659,9 +657,9 @@ Texture *VulkanRenderer::CreateTexture(const char *file, Filter filter)
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     samplerInfo.magFilter = (VkFilter)filter;
     samplerInfo.minFilter = (VkFilter)filter;
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     samplerInfo.anisotropyEnable = VK_FALSE;
     samplerInfo.maxAnisotropy = 1.0f;
     samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;

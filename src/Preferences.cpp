@@ -4,6 +4,9 @@
 #include "Math/Math.h"
 
 #include <mini/ini.h>
+#include <nlohmann/json.hpp>
+
+#include <filesystem>
 
 #include <iostream>
 #include <filesystem>
@@ -104,6 +107,66 @@ Preferences::Preferences(PlatformWindow *mainWindow, WindowManager &wm)
     m_globalSettings.m_wm = &wm;
 
     m_globalSettings.RefreshColorThemeList();
+
+    if (!std::filesystem::exists("Preferences.json"))
+    {
+        m_globalSettings.SetFont("Crystal Plex Mono");
+        m_globalSettings.SetColorTheme("Crystal");
+        return;
+    }
+
+    std::ifstream i("Preferences.json");
+    nlohmann::json j;
+    i >> j;
+
+    m_globalSettings.fontSize = j["globalSettings"]["fontSize"];
+
+    if (!j["globalSettings"]["font"].empty())
+        m_globalSettings.SetFont(j["globalSettings"]["font"]);
+    else m_globalSettings.SetFont("Crystal Plex Mono");
+
+    if (!j["globalSettings"]["colorTheme"].empty())
+        m_globalSettings.SetColorTheme(j["globalSettings"]["colorTheme"]);
+    else m_globalSettings.SetColorTheme("Crystal");
+
+    m_uiSettings.indentSpacing = j["uiSettings"]["indentSpacing"];
+
+    m_editorSettings.tabSize = j["editorSettings"]["tabSize"];
+    m_editorSettings.lineSpacing = j["editorSettings"]["lineSpacing"];
+    m_editorSettings.showLineNumbers = j["editorSettings"]["showLineNumbers"];
+    m_editorSettings.showWhitespaces = j["editorSettings"]["showWhitespaces"];
+    m_editorSettings.shortTabs = j["editorSettings"]["shortTabs"];
+    m_editorSettings.autoIndent = j["editorSettings"]["autoIndent"];
+    m_editorSettings.smoothScroll = j["editorSettings"]["smoothScroll"];
+    m_editorSettings.smoothScrollSpeed = j["editorSettings"]["smoothScrollSpeed"];
+}
+
+Preferences::~Preferences(void)
+{
+    nlohmann::json j = {
+        {"globalSettings", {
+            {"fontSize", m_globalSettings.fontSize},
+            {"font", m_globalSettings.m_fontName},
+            {"colorTheme", m_globalSettings.m_colorThemeName}
+        }},
+        {"uiSettings", {
+            {"indentSpacing", m_uiSettings.indentSpacing}
+        }},
+        {"editorSettings", {
+            {"tabSize", m_editorSettings.tabSize},
+            {"lineSpacing", m_editorSettings.lineSpacing},
+            {"showLineNumbers", m_editorSettings.showLineNumbers},
+            {"showWhitespaces", m_editorSettings.showWhitespaces},
+            {"shortTabs", m_editorSettings.shortTabs},
+            {"autoIndent", m_editorSettings.autoIndent},
+            {"smoothScroll", m_editorSettings.smoothScroll},
+            {"smoothScrollSpeed", m_editorSettings.smoothScrollSpeed}
+        }},
+    };
+
+    std::ofstream o("Preferences.json");
+    o << std::setw(4) << j;
+    o.close();
 }
 
 const std::vector<const char*> Preferences::GlobalSettings::GetColorThemeNameList(void) const
@@ -178,6 +241,8 @@ void Preferences::GlobalSettings::RefreshColorThemeList(void)
 
 void Preferences::GlobalSettings::SetColorTheme(const std::string &name)
 {
+    m_colorThemeName = name;
+
     mINI::INIFile file(m_colorThemes[name].string());
     mINI::INIStructure ini;
     file.read(ini);
@@ -232,6 +297,7 @@ void Preferences::GlobalSettings::SetColorTheme(const std::string &name)
 
 void Preferences::GlobalSettings::SetFont(const std::string &name)
 {
+    m_fontName = name;
     m_fontPack = &m_fontPacks[name];
 }
 

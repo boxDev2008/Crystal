@@ -1,7 +1,6 @@
 #pragma once
 
 #include "imgui.h"
-#include "Math/Vector2.h"
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
@@ -25,8 +24,6 @@ struct PlatformWindowSettings
 
 class PlatformWindow
 {
-    using Vector2 = Crystal::Math::Vector2;
-
 public:
     struct WindowData
     {
@@ -53,10 +50,10 @@ public:
 
     void SetColors(unsigned long titlebar, unsigned long border, unsigned long text);
 
-    const Vector2 GetSize(void) const { return Vector2(m_data.width, m_data.height); }
-    const Vector2 GetPosition(void) const { return Vector2(m_data.x, m_data.y); }
-    const Vector2 GetFramebufferSize(void) const { return Vector2(m_data.fbWidth, m_data.fbHeight); }
-    const Vector2 GetMousePosition(void) const { return Vector2(m_data.mouseX, m_data.mouseY); }
+    const ImVec2 GetSize(void) const { return ImVec2(m_data.width, m_data.height); }
+    const ImVec2 GetPosition(void) const { return ImVec2(m_data.x, m_data.y); }
+    const ImVec2 GetFramebufferSize(void) const { return ImVec2(m_data.fbWidth, m_data.fbHeight); }
+    const ImVec2 GetMousePosition(void) const { return ImVec2(m_data.mouseX, m_data.mouseY); }
     
     bool IsRunning(void) { return !m_data.shouldClose; }
     bool IsResizing(void) { return m_data.resizing; }

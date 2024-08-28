@@ -40,6 +40,7 @@ private:
 
 	// void GetCurrentWord(std::string &word, int &start, int &end);
 
+	char m_titleBuffer[1024];
 	bool m_saved = true;
 	TextEditor m_editor;
 	FindReplaceHandler m_findReplaceHandler;

@@ -38,7 +38,10 @@ public:
     private:
         FontPack *m_fontPack;
         std::unordered_map<std::string, FontPack> m_fontPacks;
+        std::string m_fontName;
+
         std::unordered_map<std::string, std::filesystem::path> m_colorThemes;
+        std::string m_colorThemeName;
         TextEditor::Palette m_editorPalette;
 
         friend class Preferences;
@@ -60,10 +63,13 @@ public:
         bool shortTabs = false;
         bool autoIndent = true;
         bool smoothScroll = false;
+        float smoothScrollSpeed = 20.0f;
     };
 
     Preferences(void) = default;
     Preferences(PlatformWindow *platformWindow, WindowManager &wm);
+
+    ~Preferences(void);
 
     void Refresh(void);
 

@@ -47,13 +47,13 @@ public:
 				func(specificWindow);
 	}
 
-	void SetLastWindow(Window *window) { m_lastWindow = window; }
-	Window *GetLastWindow(void) const { return m_lastWindow; }
+	void SetLastEditorWindow(Window *window) { m_lastEditorWindow = window; }
+	Window *GetLastEditorWindow(void) const { return m_lastEditorWindow; }
 
 private:
 	std::vector<Window*> m_windows;
 	std::vector<Window*> m_freedWindows;
-	Window *m_lastWindow = nullptr;
+	Window *m_lastEditorWindow = nullptr;
     Application *m_application;
 };
 

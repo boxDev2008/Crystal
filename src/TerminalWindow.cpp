@@ -339,8 +339,6 @@ void TerminalWindow::SetCurrentDirectoryPath(const std::filesystem::path &path)
 
 void TerminalWindow::RenderWindow(void)
 {
-    using Vector2 = Crystal::Math::Vector2;
-
     static auto isAnyKeyDown = []() -> bool
     {
         ImGuiIO &io = ImGui::GetIO();

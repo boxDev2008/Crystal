@@ -7,7 +7,7 @@
 #include <cctype>
 #include <vector>
 
-#if 0
+#if CRYSTAL_PLATFORM_WINDOWS
 #include <windows.h>
 
 int WinMain(

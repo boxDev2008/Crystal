@@ -3,16 +3,12 @@
 #include "Resources.h"
 #include "Utils.h"
 
-#include "Math/Vector2.h"
-
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
 namespace Crystal
 {
-
-using namespace Math;
 
 static std::string ConvertTabsToSpaces(const std::string &input, int tabWidth)
 {
@@ -114,23 +110,22 @@ void EditorWindow::OnWindowAdded(void)
 
 void EditorWindow::RenderWindow(void)
 {
-	std::string title = m_filePath.filename().string() + "##" + m_filePath.string();
-	const char *c_title = title.c_str();
-
 	//int start, end;
 	//ImVec2 windowPosition;
 
-	PlatformWindow &mainWindow = m_application->GetMainWindow();
-	if (mainWindow.IsResizing() || mainWindow.IsMoving())
-		m_editor.UninitializeSmoothScroll();
-
 	ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetMainDockID(), ImGuiCond_Appearing);
-	if (ImGui::Begin(c_title, &m_opened))
-	{
-		//SuggestionHandler &suggestionHandler = m_application->GetSuggestionHandler();
-		Preferences &preferences = m_application->GetPreferences();
-		WindowManager &wm = m_application->GetWindowManager();
 
+	WindowManager &wm = m_application->GetWindowManager();
+
+	Preferences &preferences = m_application->GetPreferences();
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+	if (ImGui::Begin(m_titleBuffer, &m_opened))
+	{
+		PlatformWindow &mainWindow = m_application->GetMainWindow();
+		if (mainWindow.IsResizing() || mainWindow.IsMoving())
+			m_editor.UninitializeSmoothScroll();
+
+		//SuggestionHandler &suggestionHandler = m_application->GetSuggestionHandler();
 		Preferences::EditorSettings &settings = preferences.GetEditorSettings();
 		m_editor.SetTabSize(settings.tabSize);
 		m_editor.SetLineSpacing(settings.lineSpacing);
@@ -139,6 +134,7 @@ void EditorWindow::RenderWindow(void)
 		m_editor.SetShortTabsEnabled(settings.shortTabs);
 		m_editor.SetAutoIndentEnabled(settings.autoIndent);
 		m_editor.SetSmoothScrollEnabled(settings.smoothScroll);
+		m_editor.SetSmoothScrollSpeed(settings.smoothScrollSpeed);
 
 		//m_findReplaceHandler.Render(m_editor);
 
@@ -180,17 +176,45 @@ void EditorWindow::RenderWindow(void)
 			}
 		}*/
 
-		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && wm.GetLastWindow() != this)
-			wm.SetLastWindow(this);
+		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && wm.GetLastEditorWindow() != this)
+			wm.SetLastEditorWindow(this);
 
-		m_editor.Render(c_title);
+		m_editor.Render(m_titleBuffer);
 	}
+	else
+		m_editor.UninitializeSmoothScroll();
+
 	ImGui::End();
+
+	/*if (wm.GetLastEditorWindow() == this)
+	{
+		if (ImGui::Begin("##BottomMenuBar", nullptr, ImGuiWindowFlags_NoScrollbar))
+		{
+			int32_t line, column;
+			m_editor.GetCursorPosition(line, column);
+
+			char buffer[128];
+			sprintf(buffer, "Ln %i, Col %i  Tab Size: %i  %s",
+				line + 1, column + 1, m_editor.GetTabSize(), m_editor.GetLanguageDefinitionName());
+
+			ImVec2 windowSize = ImGui::GetWindowSize();
+
+			ImVec2 textSize = ImGui::CalcTextSize(buffer, nullptr, true, windowSize.x);
+			ImGui::SetCursorPosX((windowSize.x - textSize.x) * 0.5f);
+
+			ImGui::TextUnformatted(buffer);
+		}
+		ImGui::End();
+	}*/
+
+	ImGui::PopStyleVar();
 }
 
 void EditorWindow::SetFilePath(const std::filesystem::path &path)
 {
 	m_filePath = path;
+	sprintf(m_titleBuffer, "%s##%s", path.filename().string().c_str(), path.string().c_str());
+
 	std::filesystem::path extension = m_filePath.extension();
 	if (extension == ".cpp" || extension == ".hpp" || extension == ".h")
 		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Cpp());

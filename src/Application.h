@@ -29,7 +29,7 @@ public:
 	DragDropHandler &GetDragDropHandler(void) { return m_dragDropHandler; }
 	LayoutHandler &GetLayoutHandler(void) { return m_layoutHandler; }
 
-	Preferences &GetPreferences(void) { return m_preferences; }
+	Preferences &GetPreferences(void) { return *m_preferences; }
 
 	void SetMainDirectoryPath(const std::filesystem::path &path);
 	std::filesystem::path GetMainDirectoryPath(void) const { return m_mainDirectory; }
@@ -41,7 +41,7 @@ private:
 	//SuggestionHandler m_suggestionHandler;
 	DragDropHandler m_dragDropHandler;
 	LayoutHandler m_layoutHandler;
-	Preferences m_preferences;
+	std::unique_ptr<Preferences> m_preferences;
 
 	//std::unique_ptr<LspHandler> m_lspHandler;
 

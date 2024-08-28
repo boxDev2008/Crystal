@@ -2,21 +2,22 @@
 #include "Application.h"
 #include "EditorWindow.h"
 
-#include <algorithm>
+#include "Math/Math.h"
 
 namespace Crystal
 {
 
 void PreferencesWindow::RenderWindow(void)
 {
-    using Vector2 = Crystal::Math::Vector2;
+	using namespace Crystal::Math;
+
     Preferences &preferences = m_application->GetPreferences();
 
-    //ImGui::SetNextWindowSize(Vector2(600, 700), ImGuiCond_FirstUseEver);
+    //ImGui::SetNextWindowSize(ImVec2(600, 700), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetMainDockID(), ImGuiCond_Appearing);
     if (ImGui::Begin("Preferences##Preferences", &m_opened, 0))
     {
-        /*ImGui::BeginChild("LeftPanel", Vector2(ImGui::GetWindowSize().x * 0.25f, 0), true);
+        /*ImGui::BeginChild("LeftPanel", ImVec2(ImGui::GetWindowSize().x * 0.25f, 0), true);
         ImGui::EndChild();
 
         ImGui::SameLine();
@@ -67,15 +68,23 @@ void PreferencesWindow::RenderWindow(void)
             }
             ImGui::Checkbox("Auto Indent", &settings.autoIndent);
             ImGui::Checkbox("Smooth Scroll (Experimental)", &settings.smoothScroll);
+            if (settings.smoothScroll)
+            {
+                ImGui::SameLine();
+                ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.5f - ImGui::CalcTextSize("Scroll Speed").x);
+                ImGui::DragFloat("Scroll Speed", &settings.smoothScrollSpeed, 0.1f, 1.0f, 50.0f, "%.1f");
+                ImGui::PopItemWidth();
+                settings.smoothScrollSpeed = Clamp(settings.smoothScrollSpeed, 1.0f, 50.0f);
+            }
             ImGui::PopStyleVar();
 
             ImGui::TextUnformatted("Tab Size");
             ImGui::DragInt("##TabSize", &settings.tabSize, 0.1f, 1, 32);
-            settings.tabSize = std::clamp(settings.tabSize, 1, 32);
+            settings.tabSize = Clamp(settings.tabSize, 1, 32);
 
             ImGui::TextUnformatted("Line Spacing");
             ImGui::DragFloat("##LineSpacing", &settings.lineSpacing, 0.01f, 0.5f, 2.0f, "%.2f");
-            settings.lineSpacing = std::clamp(settings.lineSpacing, 0.5f, 2.0f);
+            settings.lineSpacing = Clamp(settings.lineSpacing, 0.5f, 2.0f);
         }
 
         //ImGui::EndChild();

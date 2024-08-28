@@ -36,6 +36,7 @@ std::unordered_map<fs::path, std::string> s_iconMap = {
     { ".cs", "csharp" },
     { ".cshtml", "cshtml" },
     { ".csproj", "csproj" },
+    { ".fs", "fsharp" },
     { ".sln", "sln" },
     { ".zip", "archive" },
     { ".rar", "archive" },
@@ -56,6 +57,7 @@ std::unordered_map<fs::path, std::string> s_iconMap = {
     { ".ts", "typescript" },
     { ".html", "html" },
     { ".css", "css" },
+    { ".php", "php" },
     { ".md", "markdown" },
     { ".rb", "ruby" },
     { ".dart", "dart" },
@@ -71,6 +73,12 @@ std::unordered_map<fs::path, std::string> s_iconMap = {
     { ".flac", "audio" },
     { ".db", "database" },
     { ".pdb", "database" },
+    { ".psd", "photoshop" },
+    { ".otf", "fontotf" },
+    { ".ttf", "fontttf" },
+    { ".woff", "fontwoff" },
+    { ".woff2", "fontwoff2" },
+    { ".obj", "obj" },
     { ".bin", "binary" },
     { ".exe", "binary" },
     { ".glsl", "glsl" },
@@ -413,8 +421,7 @@ void ExplorerWindow::RenderWindow(void)
 	ImGui::PushStyleColor(ImGuiCol_TabDimmedSelectedOverline, {0.0f, 0.0f, 0.0f, 0.0f});
 
 	ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetLeftDockID(), ImGuiCond_FirstUseEver);
-	
-    
+
     if (ImGui::Begin("Explorer"))
 	{
         fs::path directory = m_application->GetMainDirectoryPath();
@@ -426,7 +433,7 @@ void ExplorerWindow::RenderWindow(void)
 		    RenderBranch(directory);
 
         ImGui::SetCursorPosY(m_mainDragDropTargetPosition);
-        ImGui::Dummy(Math::Vector2(0.0f, ImGui::GetScrollY()) + ImGui::GetContentRegionAvail());
+        ImGui::Dummy(ImVec2(0.0f, ImGui::GetScrollY()) + ImGui::GetContentRegionAvail());
 
         m_application->GetDragDropHandler().BeginDragDropFileMoveTarget(directory);
 

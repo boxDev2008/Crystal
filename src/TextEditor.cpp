@@ -5,12 +5,10 @@
 
 #include "TextEditor.h"
 
-#include "math/Math.h"
-#include "math/Vector2.h"
+#include "Math/Math.h"
 
 #define IMGUI_SCROLLBAR_WIDTH 14.0f
 #define POS_TO_COORDS_COLUMN_OFFSET 0.33f
-#define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h" // for imGui::GetCurrentWindow()
 
 // --------------------------------------- //
@@ -2247,31 +2245,29 @@ void TextEditor::Render(bool aParentIsFocused)
 
 	if (mSmoothScroll)
 	{
-		ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
-
 		if (!mSmoothScrollInitialized)
 		{
-			mScrollX = ImGui::GetScrollX();
-			mScrollY = ImGui::GetScrollY();
-			mSmoothCursorScreenPos = cursorScreenPos;
+			RefreshScrollPosition();
 			mSmoothScrollInitialized = true;
 		}
-
-		const float deltaTime = ImGui::GetIO().DeltaTime;
-		static const float speedFactor = 20.0f;
-	
-		if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && ImGui::IsMouseDragging(0))
-			RefreshScrollPosition();
 		else
 		{
-			using namespace Crystal::Math;
-			const float smoothScrollSpeed = deltaTime * speedFactor;
+			const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+			const float deltaTime = ImGui::GetIO().DeltaTime;
 
-			mSmoothCursorScreenPos.x = Lerp(mSmoothCursorScreenPos.x, cursorScreenPos.x, smoothScrollSpeed);
-			mSmoothCursorScreenPos.y = Lerp(mSmoothCursorScreenPos.y, cursorScreenPos.y, smoothScrollSpeed);
+			if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && ImGui::IsMouseDragging(0))
+				RefreshScrollPosition();
+			else
+			{
+				using namespace Crystal::Math;
+				const float smoothScrollSpeed = deltaTime * mSmoothScrollSpeed;
 
-			mScrollX = Lerp(mScrollX, ImGui::GetScrollX(), smoothScrollSpeed);
-			mScrollY = Lerp(mScrollY, ImGui::GetScrollY(), smoothScrollSpeed);
+				mSmoothCursorScreenPos.x = Lerp(mSmoothCursorScreenPos.x, cursorScreenPos.x, smoothScrollSpeed);
+				mSmoothCursorScreenPos.y = Lerp(mSmoothCursorScreenPos.y, cursorScreenPos.y, smoothScrollSpeed);
+
+				mScrollX = Lerp(mScrollX, ImGui::GetScrollX(), smoothScrollSpeed);
+				mScrollY = Lerp(mScrollY, ImGui::GetScrollY(), smoothScrollSpeed);
+			}
 		}
 	}
 	else
@@ -2333,6 +2329,7 @@ void TextEditor::Render(bool aParentIsFocused)
 
 				if (ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(lineStartScreenPos, end))
 				{
+					ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {16.0f, 16.0f});
 					ImGui::BeginTooltip();
 					ImGui::PushStyleColor(ImGuiCol_Text, mPalette[(int)PaletteIndex::ErrorMarker]);
 					//ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.2f, 0.2f, 1.0f));
@@ -2344,6 +2341,7 @@ void TextEditor::Render(bool aParentIsFocused)
 					//ImGui::PopStyleColor();
 					ImGui::PopStyleColor();
 					ImGui::EndTooltip();
+					ImGui::PopStyleVar();
 				}
 			}
 

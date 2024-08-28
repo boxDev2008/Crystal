@@ -2,8 +2,10 @@
 #include "Application.h"
 #include "Resources.h"
 #include "ImGuiFileDialog.h"
+
 #include "EditorWindow.h"
 #include "ImageWindow.h"
+#include "PreferencesWindow.h"
 
 namespace Crystal
 {
@@ -12,7 +14,8 @@ void WizardWindow::RenderWindow(void)
 {
 	WindowManager &windowManager = m_application->GetWindowManager();
 	if (windowManager.CheckForWindowOfType<EditorWindow>() ||
-		windowManager.CheckForWindowOfType<ImageWindow>())
+		windowManager.CheckForWindowOfType<ImageWindow>() ||
+		windowManager.CheckForWindowOfType<PreferencesWindow>())
 	{
 		m_opened = false;
 		return;

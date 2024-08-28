@@ -16,8 +16,6 @@ namespace Crystal
 
 class TerminalWindow : public Window
 {
-    using Vector2 = Math::Vector2;
-
 public:
     struct HistoryData
     {
@@ -58,7 +56,7 @@ private:
     std::unique_ptr<PseudoTerminal> m_pseudoTerminal;
     std::unique_ptr<ProcessPool> m_processPool;
 
-    Vector2 m_cursorPosition;
+    ImVec2 m_cursorPosition;
 
     std::string m_outputBuffer;
     std::string m_lastOutput;

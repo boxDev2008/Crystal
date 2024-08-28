@@ -29,24 +29,26 @@ void ImageWindow::RenderWindow(void)
 	const char *c_title = title.c_str();
 
 	static bool isDragging = false;
-	static Vector2 dragStart;
+	static ImVec2 dragStart;
 	
 	ImGuiIO &io = ImGui::GetIO();
 	m_smoothZoomFactor = Math::Lerp(m_smoothZoomFactor, m_zoomFactor, io.DeltaTime * 15.0f);
 
-    ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetMainDockID(), ImGuiCond_FirstUseEver);
+	LayoutHandler &layoutHandler = m_application->GetLayoutHandler();
+    ImGui::SetNextWindowDockID(layoutHandler.GetMainDockID(), ImGuiCond_FirstUseEver);
     if (ImGui::Begin(c_title, &m_opened, ImGuiWindowFlags_NoScrollWithMouse))
     {
-        Vector2 windowSize = ImGui::GetContentRegionAvail();
+        ImVec2 windowSize = ImGui::GetContentRegionAvail();
 
-        Vector2 imageSize = Vector2(m_texture->width, m_texture->height) * m_smoothZoomFactor * windowSize.x / m_texture->width;
-        Vector2 imagePos = (windowSize - imageSize) * 0.5f  + m_offset;
+        ImVec2 imageSize = ImVec2(m_texture->width, m_texture->height) * m_smoothZoomFactor * windowSize.x / m_texture->width;
+        ImVec2 imagePos = (windowSize - imageSize) * 0.5f  + m_offset;
         
         const bool isHovered = ImGui::IsWindowHovered();
 
         if (ImGui::IsWindowFocused())
         {
-            m_application->GetWindowManager().SetLastWindow(this);
+		    WindowManager &wm = m_application->GetWindowManager();
+            wm.SetLastEditorWindow(this);
 
             if (io.KeyCtrl)
 				if (ImGui::IsKeyPressed(ImGuiKey_Equal)) m_zoomFactor *= 1.2f;
@@ -54,7 +56,7 @@ void ImageWindow::RenderWindow(void)
 
             if (isHovered && ImGui::IsWindowDocked() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
             {
-                Vector2 mouseDragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+                ImVec2 mouseDragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
                 m_offset += mouseDragDelta;
                 ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
             }

@@ -179,6 +179,7 @@ public:
 	inline bool IsShortTabsEnabled() const { return mShortTabs; }
 	inline void SetSmoothScrollEnabled(bool aValue) { mSmoothScroll = aValue; }
 	inline bool IsSmoothScrollEnabled() const { return mSmoothScroll; }
+	inline void SetSmoothScrollSpeed(float aValue) { mSmoothScrollSpeed = aValue; }
 	inline int GetLineCount() const { return mLines.size(); }
 	inline bool IsOverwriteEnabled() const { return mOverwrite; }
 	void SetPalette(const Palette &aValue);
@@ -421,7 +422,9 @@ private:
 	bool mShowWhitespaces = false;
 	bool mShowLineNumbers = false;
 	bool mShortTabs = false;
-	bool mSmoothScroll = true;
+
+	bool mSmoothScroll = false;
+	float mSmoothScrollSpeed = 0.0f;
 
 	int mSetViewAtLine = -1;
 	SetViewAtLineMode mSetViewAtLineMode;
