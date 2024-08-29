@@ -11,3 +11,4 @@ obj/
 *.exe
 *.make
 Makefile
+bin/Release/Preferences.json

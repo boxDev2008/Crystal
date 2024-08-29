@@ -5,7 +5,7 @@ workspace "Crystal"
 	startproject "Crystal"
 
 project "Crystal"
-	kind "WindowedApp"
+	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
 	targetdir "bin/%{cfg.buildcfg}"
@@ -35,4 +35,4 @@ project "Crystal"
    	filter { "system:windows" }
 		libdirs { VULKAN_LIB_PATH }
 		links { "user32", "gdi32", "vulkan-1" }
-        defines { "NDEBUG", "VK_USE_PLATFORM_WIN32_KHR", "_GLFW_WIN32", "IMGUI_DEFINE_MATH_OPERATORS" }
+        defines { "NDEBUG", "VK_USE_PLATFORM_WIN32_KHR", "_GLFW_WIN32" }

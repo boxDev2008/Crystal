@@ -4,6 +4,7 @@
 #include "Utils.h"
 
 #include "imgui_internal.h"
+#include "imgui_ansi_colored_text.h"
 
 #include <stdio.h>
 
@@ -188,11 +189,15 @@ std::string TerminalWindow::ParseAnsiEscapeCodes(const std::string &input)
                     {
                         case 'm':
                         {
-                            std::cout << "Detected color sequence: " << parameters << '\n';
-                            break;
-                        }
-                        case 'H':
-                        {
+                            //std::cout << "Detected color sequence: " << parameters << '\n';
+                            /*if (parameters.empty())
+                                m_outputBuffer.append("\x1B[38;5;7m");
+                            else
+                            {
+                                result.append("\x1B[");
+                                result.append(parameters);
+                                result.push_back('m');
+                            }*/
                             break;
                         }
                         case 'K':
@@ -205,18 +210,20 @@ std::string TerminalWindow::ParseAnsiEscapeCodes(const std::string &input)
                             switch (parameters[0])
                             {
                             case '0':
-                                std::cout << "Detected 'erase from cursor until end of screen' command.\n";
+                                //std::cout << "Detected 'erase from cursor until end of screen' command.\n";
                                 break;
                             case '1':
-                                std::cout << "Detected 'erase from cursor to beginning of screen' command.\n";
+                                //std::cout << "Detected 'erase from cursor to beginning of screen' command.\n";
                                 break;
                             case '2':
-                                std::cout << "Detected 'erase entire screen' command.\n";
-                                m_outputBuffer.clear();
+                                //std::cout << "Detected 'erase entire screen' command.\n";
+                                //m_outputBuffer.clear();
+                                //m_outputBuffer.append("\x1B[m");
                                 break;
                             case '3':
-                                std::cout << "Detected 'erase saved lines' command.\n";
-                                m_outputBuffer.clear();
+                                //std::cout << "Detected 'erase saved lines' command.\n";
+                                //m_outputBuffer.clear();
+                                //m_outputBuffer.append("\x1B[m");
                                 break;
                             }
                             break;
@@ -415,7 +422,7 @@ void TerminalWindow::RenderWindow(void)
                 m_processPool->SendCtrlCSignal();
 
             ImGui::TextWrapped("%s", m_outputBuffer.c_str());
-
+            //ImGui::TextAnsiColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "%s", m_outputBuffer.c_str());
             if (!m_busy)
             {
                 const ImU32 writingColor = m_application->GetPreferences().GetGlobalSettings().GetEditorPalette()[1];

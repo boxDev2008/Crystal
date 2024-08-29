@@ -239,16 +239,8 @@ Application::Application(void)
 	m_windowManager.AddWindow(new ExplorerWindow());
 	m_windowManager.AddWindow(new WizardWindow());
 
-	double currentTime, lastTime;
 	while (m_mainWindow->IsRunning())
 	{
-		currentTime = glfwGetTime(); 
-
-		if(currentTime - lastTime < 1.0 / 120.0) 
-			continue;
-
-		lastTime = currentTime;
-
 		m_mainWindow->PollEvents();
 
 		m_preferences->Refresh();

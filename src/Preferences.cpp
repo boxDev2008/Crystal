@@ -111,7 +111,7 @@ Preferences::Preferences(PlatformWindow *mainWindow, WindowManager &wm)
     if (!std::filesystem::exists("Preferences.json"))
     {
         m_globalSettings.SetFont("Crystal Plex Mono");
-        m_globalSettings.SetColorTheme("Crystal");
+        m_globalSettings.SetColorTheme("Crystal Dark");
         return;
     }
 
@@ -216,7 +216,6 @@ void Preferences::GlobalSettings::RefreshColorThemeList(void)
         fontConfig.OversampleV = 2;
         fontConfig.OversampleH = 2;
         io.Fonts->Clear();
-        //fontConfig.RasterizerDensity = 0.5f;
         for (const auto &entry : fs::directory_iterator("fonts"))
         {
             fs::path path = entry.path();

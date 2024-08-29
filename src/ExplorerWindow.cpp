@@ -27,6 +27,7 @@ std::unordered_map<fs::path, std::string> s_iconMap = {
     { ".webp", "imagewebp" },
     { ".gif", "imagegif" },
     { ".ico", "imageico" },
+    { ".svg", "svg" },
     { ".lua", "lua" },
     { ".cpp", "cpp" },
     { ".hpp", "hpp" },
@@ -392,7 +393,7 @@ void ExplorerWindow::RenderBranch(const fs::path &directory)
     ImGui::SetNextWindowPos(mouseCurosrPosition, ImGuiCond_Appearing);
     if (ImGui::BeginPopupModal("##RenameItemPopupOpened", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize))
     {
-        if (!ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered() && ImGui::IsAnyMouseDown() || ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+        if ((!ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && !ImGui::IsAnyItemActive() && ImGui::IsAnyMouseDown()) || ImGui::IsKeyPressed(ImGuiKey_Escape, false))
             ImGui::CloseCurrentPopup();
 
         if (!ImGui::IsAnyItemActive()) 
