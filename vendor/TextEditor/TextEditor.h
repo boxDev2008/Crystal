@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <map>
 #include <regex>
+#include <functional>
 #include "imgui.h"
 
 class IMGUI_API TextEditor
@@ -167,8 +168,69 @@ public:
 		static const LanguageDefinition& Text();
 	};
 
-	typedef std::map<int, std::string> ErrorMarkers;
-	void SetErrorMarkers(const ErrorMarkers& aMarkers) { mErrorMarkers = aMarkers; }
+	struct Cursor
+	{
+		Coordinates mInteractiveStart = { 0, 0 };
+		Coordinates mInteractiveEnd = { 0, 0 };
+		inline Coordinates GetSelectionStart() const { return mInteractiveStart < mInteractiveEnd ? mInteractiveStart : mInteractiveEnd; }
+		inline Coordinates GetSelectionEnd() const { return mInteractiveStart > mInteractiveEnd ? mInteractiveStart : mInteractiveEnd; }
+		inline bool HasSelection() const { return mInteractiveStart != mInteractiveEnd; }
+	};
+
+	struct EditorState // state to be restored with undo/redo
+	{
+		int mCurrentCursor = 0;
+		int mLastAddedCursor = 0;
+		std::vector<Cursor> mCursors = { {{0,0}} };
+		void AddCursor();
+		int GetLastAddedCursorIndex();
+		void SortCursorsFromTopToBottom();
+	};
+
+	enum class UndoOperationType { Add, Delete };
+	struct UndoOperation
+	{
+		std::string mText;
+		TextEditor::Coordinates mStart;
+		TextEditor::Coordinates mEnd;
+		UndoOperationType mType;
+	};
+
+	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
+
+	class UndoRecord
+	{
+	public:
+		UndoRecord() {}
+		~UndoRecord() {}
+
+		UndoRecord(
+			const std::vector<UndoOperation>& aOperations,
+			TextEditor::EditorState& aBefore,
+			TextEditor::EditorState& aAfter);
+
+		void Undo(TextEditor* aEditor);
+		void Redo(TextEditor* aEditor);
+
+		std::vector<UndoOperation> mOperations;
+
+		EditorState mBefore;
+		EditorState mAfter;
+	};
+
+	//typedef std::map<int, std::string> ErrorMarkers;
+	//void SetErrorMarkers(const ErrorMarkers& aMarkers) { mErrorMarkers = aMarkers; }
+
+	struct ErrorMarker
+	{
+		int mStartColumn;
+		int mEndColumn;
+		std::string mMessage;
+	};
+
+	typedef std::unordered_map<int, ErrorMarker> ErrorMarkers;
+	void ClearErrorMarkers() { mErrorMarkers.clear(); }
+	void AddErrorMarker(int aLine, int aStartColumn, int aEndColumn, const std::string& aMessage);
 
 	inline void SetReadOnlyEnabled(bool aValue) { mReadOnly = aValue; }
 	inline bool IsReadOnlyEnabled() const { return mReadOnly; }
@@ -206,6 +268,8 @@ public:
 	void ClearExtraCursors();
 	void ClearSelections();
 	void SetCursorPosition(int aLine, int aCharIndex);
+	void SetCursorPosition(const Coordinates& aPosition, int aCursor = -1, bool aClearSelection = true);
+
 	inline void GetCursorPosition(int& outLine, int& outColumn) const
 	{
 		auto coords = GetActualCursorCoordinates();
@@ -216,6 +280,12 @@ public:
 	int GetLastVisibleLine();
 	void SetViewAtLine(int aLine, SetViewAtLineMode aMode);
 
+	int GetCharacterColumn(int aLine, int aIndex) const;
+
+	void InsertTextAtCursor(const char* aValue, int aCursor = -1);
+	float TextDistanceToLineStart(const Coordinates& aFrom, bool aSanitizeCoords = true) const;
+	void DeleteRange(const Coordinates& aStart, const Coordinates& aEnd);
+
 	void Copy();
 	void Cut();
 	void Paste();
@@ -224,6 +294,13 @@ public:
 	inline bool CanUndo() const { return !mReadOnly && mUndoIndex > 0; };
 	inline bool CanRedo() const { return !mReadOnly && mUndoIndex < (int)mUndoBuffer.size(); };
 	inline int GetUndoIndex() const { return mUndoIndex; };
+
+	float GetScrollX() const { return mScrollX; }
+	float GetScrollY() const { return mScrollY; }
+
+	EditorState GetState() const { return mState; }
+	void AddUndo(UndoRecord& aValue);
+	void SetRecordCallback(std::function<void(const UndoRecord &)> aCallback) { mRecordCallback = aCallback; }
 
 	void SetText(const std::string& aText);
 	std::string GetText() const;
@@ -265,25 +342,6 @@ private:
 
 	// ------------- Internal ------------- //
 
-	struct Cursor
-	{
-		Coordinates mInteractiveStart = { 0, 0 };
-		Coordinates mInteractiveEnd = { 0, 0 };
-		inline Coordinates GetSelectionStart() const { return mInteractiveStart < mInteractiveEnd ? mInteractiveStart : mInteractiveEnd; }
-		inline Coordinates GetSelectionEnd() const { return mInteractiveStart > mInteractiveEnd ? mInteractiveStart : mInteractiveEnd; }
-		inline bool HasSelection() const { return mInteractiveStart != mInteractiveEnd; }
-	};
-
-	struct EditorState // state to be restored with undo/redo
-	{
-		int mCurrentCursor = 0;
-		int mLastAddedCursor = 0;
-		std::vector<Cursor> mCursors = { {{0,0}} };
-		void AddCursor();
-		int GetLastAddedCursorIndex();
-		void SortCursorsFromTopToBottom();
-	};
-
 	struct Glyph
 	{
 		char mChar;
@@ -298,45 +356,11 @@ private:
 
 	typedef std::vector<Glyph> Line;
 
-	enum class UndoOperationType { Add, Delete };
-	struct UndoOperation
-	{
-		std::string mText;
-		TextEditor::Coordinates mStart;
-		TextEditor::Coordinates mEnd;
-		UndoOperationType mType;
-	};
-
-	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
-
-	class UndoRecord
-	{
-	public:
-		UndoRecord() {}
-		~UndoRecord() {}
-
-		UndoRecord(
-			const std::vector<UndoOperation>& aOperations,
-			TextEditor::EditorState& aBefore,
-			TextEditor::EditorState& aAfter);
-
-		void Undo(TextEditor* aEditor);
-		void Redo(TextEditor* aEditor);
-
-		std::vector<UndoOperation> mOperations;
-
-		EditorState mBefore;
-		EditorState mAfter;
-	};
-
 	std::string GetText(const Coordinates& aStart, const Coordinates& aEnd) const;
 	std::string GetClipboardText() const;
 	std::string GetSelectedText(int aCursor = -1) const;
 
-	void SetCursorPosition(const Coordinates& aPosition, int aCursor = -1, bool aClearSelection = true);
-
 	int InsertTextAt(Coordinates& aWhere, const char* aValue);
-	void InsertTextAtCursor(const char* aValue, int aCursor = -1);
 
 	enum class MoveDirection { Right = 0, Left = 1, Up = 2, Down = 3 };
 	bool Move(int& aLine, int& aCharIndex, bool aLeft = false, bool aLockLine = false) const;
@@ -369,7 +393,6 @@ private:
 	void ToggleLineComment();
 	void RemoveCurrentLines();
 
-	float TextDistanceToLineStart(const Coordinates& aFrom, bool aSanitizeCoords = true) const;
 	void EnsureCursorVisible(int aCursor = -1, bool aStartToo = false);
 
 	Coordinates SanitizeCoordinates(const Coordinates& aValue) const;
@@ -379,14 +402,12 @@ private:
 	Coordinates FindWordEnd(const Coordinates& aFrom) const;
 	int GetCharacterIndexL(const Coordinates& aCoordinates) const;
 	int GetCharacterIndexR(const Coordinates& aCoordinates) const;
-	int GetCharacterColumn(int aLine, int aIndex) const;
 	int GetFirstVisibleCharacterIndex(int aLine) const;
 	int GetLineMaxColumn(int aLine, int aLimit = -1) const;
 
 	Line& InsertLine(int aIndex);
 	void RemoveLine(int aIndex, const std::unordered_set<int>* aHandledCursors = nullptr);
 	void RemoveLines(int aStart, int aEnd);
-	void DeleteRange(const Coordinates& aStart, const Coordinates& aEnd);
 	void DeleteSelection(int aCursor = -1);
 
 	void RemoveGlyphsFromLine(int aLine, int aStartChar, int aEndChar = -1);
@@ -403,8 +424,6 @@ private:
 	void OnLineChanged(bool aBeforeChange, int aLine, int aColumn, int aCharCount, bool aDeleted);
 	void MergeCursorsIfPossible();
 
-	void AddUndo(UndoRecord& aValue);
-
 	void Colorize(int aFromLine = 0, int aCount = -1);
 	void ColorizeRange(int aFromLine = 0, int aToLine = 0);
 	void ColorizeInternal();
@@ -415,6 +434,7 @@ private:
 	EditorState mState;
 	std::vector<UndoRecord> mUndoBuffer;
 	int mUndoIndex = 0;
+	std::function<void(const UndoRecord &)> mRecordCallback;
 
 	int mTabSize = 4;
 	float mLineSpacing = 1.0f;

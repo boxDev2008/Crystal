@@ -270,13 +270,22 @@ void TextEditor::Paste()
 void TextEditor::Undo(int aSteps)
 {
 	while (CanUndo() && aSteps-- > 0)
+	{
 		mUndoBuffer[--mUndoIndex].Undo(this);
+		if (mRecordCallback)
+		mRecordCallback(mUndoBuffer[mUndoIndex]);
+	}
 }
 
 void TextEditor::Redo(int aSteps)
 {
 	while (CanRedo() && aSteps-- > 0)
-		mUndoBuffer[mUndoIndex++].Redo(this);
+	{
+		mUndoBuffer[mUndoIndex].Redo(this);	
+		if (mRecordCallback)
+			mRecordCallback(mUndoBuffer[mUndoIndex]);
+		mUndoIndex++;
+	}
 }
 
 void TextEditor::SetText(const std::string& aText)
@@ -1371,6 +1380,8 @@ void TextEditor::MoveUpCurrentLines()
 	u.mOperations.push_back({ GetText(start, end), start, end, UndoOperationType::Add });
 	u.mAfter = mState;
 	AddUndo(u);
+
+	mTextChanged = true;
 }
 
 void TextEditor::MoveDownCurrentLines()
@@ -1415,6 +1426,8 @@ void TextEditor::MoveDownCurrentLines()
 	u.mOperations.push_back({ GetText(start, end), start, end, UndoOperationType::Add });
 	u.mAfter = mState;
 	AddUndo(u);
+
+	mTextChanged = true;
 }
 
 void TextEditor::ToggleLineComment()
@@ -1770,10 +1783,10 @@ TextEditor::Line& TextEditor::InsertLine(int aIndex)
 	assert(!mReadOnly);
 	auto& result = *mLines.insert(mLines.begin() + aIndex, Line());
 
-	ErrorMarkers etmp;
+	/*ErrorMarkers etmp;
 	for (auto& i : mErrorMarkers)
 		etmp.insert(ErrorMarkers::value_type(i.first >= aIndex ? i.first + 1 : i.first, i.second));
-	mErrorMarkers = std::move(etmp);
+	mErrorMarkers = std::move(etmp);*/
 
 	for (int c = 0; c <= mState.mCurrentCursor; c++) // handle multiple cursors
 	{
@@ -1789,7 +1802,7 @@ void TextEditor::RemoveLine(int aIndex, const std::unordered_set<int>* aHandledC
 	assert(!mReadOnly);
 	assert(mLines.size() > 1);
 
-	ErrorMarkers etmp;
+	/*ErrorMarkers etmp;
 	for (auto& i : mErrorMarkers)
 	{
 		ErrorMarkers::value_type e(i.first > aIndex ? i.first - 1 : i.first, i.second);
@@ -1797,7 +1810,7 @@ void TextEditor::RemoveLine(int aIndex, const std::unordered_set<int>* aHandledC
 			continue;
 		etmp.insert(e);
 	}
-	mErrorMarkers = std::move(etmp);
+	mErrorMarkers = std::move(etmp);*/
 
 	mLines.erase(mLines.begin() + aIndex);
 	assert(!mLines.empty());
@@ -1821,7 +1834,7 @@ void TextEditor::RemoveLines(int aStart, int aEnd)
 	assert(aEnd >= aStart);
 	assert(mLines.size() > (size_t)(aEnd - aStart));
 
-	ErrorMarkers etmp;
+	/*ErrorMarkers etmp;
 	for (auto& i : mErrorMarkers)
 	{
 		ErrorMarkers::value_type e(i.first >= aStart ? i.first - 1 : i.first, i.second);
@@ -1829,7 +1842,7 @@ void TextEditor::RemoveLines(int aStart, int aEnd)
 			continue;
 		etmp.insert(e);
 	}
-	mErrorMarkers = std::move(etmp);
+	mErrorMarkers = std::move(etmp);*/
 
 	mLines.erase(mLines.begin() + aStart, mLines.begin() + aEnd);
 	assert(!mLines.empty());
@@ -2227,6 +2240,12 @@ void TextEditor::UpdateViewVariables(float aScrollX, float aScrollY)
 	mLastVisibleColumn = Max((int)((mContentWidth + aScrollX - mTextStart) / mCharAdvance.x), 0);
 }
 
+void TextEditor::AddErrorMarker(int aLine, int aStartColumn, int aEndColumn, const std::string& aMessage)
+{
+	if (mErrorMarkers.find(aLine) == mErrorMarkers.end())
+		mErrorMarkers[aLine] = { aStartColumn, aEndColumn, aMessage };
+}
+
 void TextEditor::Render(bool aParentIsFocused)
 {
 	/* Compute mCharAdvance regarding to scaled font size (Ctrl + mouse wheel)*/
@@ -2293,31 +2312,6 @@ void TextEditor::Render(bool aParentIsFocused)
 
 			const ImVec2 highlightStart = ImVec2(start.x + mTextStart, start.y);
 
-			// Draw error markers
-			auto errorIt = mErrorMarkers.find(lineNo + 1);
-			if (errorIt != mErrorMarkers.end())
-			{
-				auto end = ImVec2(lineStartScreenPos.x + contentSize.x + 2.0f * mScrollX, lineStartScreenPos.y + mCharAdvance.y);
-				drawList->AddRectFilled(highlightStart, end, mPalette[(int)PaletteIndex::ErrorMarker]);
-
-				if (ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(lineStartScreenPos, end))
-				{
-					ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {16.0f, 16.0f});
-					ImGui::BeginTooltip();
-					ImGui::PushStyleColor(ImGuiCol_Text, mPalette[(int)PaletteIndex::ErrorMarker]);
-					//ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.2f, 0.2f, 1.0f));
-					ImGui::Text("Error at line %d:", errorIt->first);
-					//ImGui::PopStyleColor();
-					ImGui::Separator();
-					//ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.2f, 1.0f));
-					ImGui::Text("%s", errorIt->second.c_str());
-					//ImGui::PopStyleColor();
-					ImGui::PopStyleColor();
-					ImGui::EndTooltip();
-					ImGui::PopStyleVar();
-				}
-			}
-
 			// Draw line number (right aligned)
 			if (mShowLineNumbers)
 			{
@@ -2373,6 +2367,38 @@ void TextEditor::Render(bool aParentIsFocused)
 							drawList->AddRectFilled(topLeft, bottomRight, mPalette[(int)PaletteIndex::Cursor]);
 						}
 					}
+				}
+			}
+
+			// Draw error markers
+			auto errorIt = mErrorMarkers.find(lineNo + 1);
+			if (errorIt != mErrorMarkers.end())
+			{
+				/*auto end = ImVec2(lineStartScreenPos.x + contentSize.x + 2.0f * mScrollX, lineStartScreenPos.y + mCharAdvance.y);
+				drawList->AddRectFilled(highlightStart, end, mPalette[(int)PaletteIndex::ErrorMarker]);*/
+
+				//std::cout << "Error marker: " << errorIt->first << " " << errorIt->second.mStartColumn << " " << errorIt->second.mEndColumn << '\n';
+
+				float y = lineStartScreenPos.y + mCharAdvance.y;
+				auto start = ImVec2(lineStartScreenPos.x + mTextStart + TextDistanceToLineStart({lineNo, GetCharacterColumn(lineNo, errorIt->second.mStartColumn)}), y - 2);
+				auto end = ImVec2(lineStartScreenPos.x + mTextStart + TextDistanceToLineStart({lineNo, GetCharacterColumn(lineNo, errorIt->second.mEndColumn)}), y);
+				drawList->AddRectFilled(start, end, mPalette[(int)PaletteIndex::ErrorMarker]);
+
+				if (ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(ImVec2(start.x, lineStartScreenPos.y), end))
+				{
+					ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {16.0f, 16.0f});
+					ImGui::BeginTooltip();
+					ImGui::PushStyleColor(ImGuiCol_Text, mPalette[(int)PaletteIndex::ErrorMarker]);
+					//ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.2f, 0.2f, 1.0f));
+					ImGui::Text("Error at line %d:", errorIt->first);
+					//ImGui::PopStyleColor();
+					ImGui::Separator();
+					//ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.2f, 1.0f));
+					ImGui::Text("%s", errorIt->second.mMessage.c_str());
+					//ImGui::PopStyleColor();
+					ImGui::PopStyleColor();
+					ImGui::EndTooltip();
+					ImGui::PopStyleVar();
 				}
 			}
 
@@ -2603,6 +2629,8 @@ void TextEditor::AddUndo(UndoRecord& aValue)
 	mUndoBuffer.resize((size_t)(mUndoIndex + 1));
 	mUndoBuffer.back() = aValue;
 	++mUndoIndex;
+	if (mRecordCallback)
+		mRecordCallback(aValue);
 }
 
 // TODO

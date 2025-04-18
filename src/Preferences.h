@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TextEditor.h"
+#include "TextEditor/TextEditor.h"
 #include "WindowManager.h"
 #include "PlatformWindow.h"
 

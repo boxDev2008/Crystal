@@ -5,8 +5,7 @@
 #include "Preferences.h"
 #include "Rendering/Renderer.h"
 
-#include "BuildErrorHandler.h"
-#include "SuggestionHandler.h"
+//#include "SuggestionHandler.h"
 #include "LayoutHandler.h"
 #include "DragDropHandler.h"
 
@@ -24,7 +23,6 @@ public:
 	PlatformWindow &GetMainWindow(void) { return *m_mainWindow; }
 	Renderer &GetRenderer(void) { return *m_renderer; }
 	WindowManager &GetWindowManager(void) { return m_windowManager; }
-	BuildErrorHandler &GetBuildErrorHandler(void) { return m_buildErrorHandler; }
 	//SuggestionHandler &GetSuggestionHandler(void) { return m_suggestionHandler; }
 	DragDropHandler &GetDragDropHandler(void) { return m_dragDropHandler; }
 	LayoutHandler &GetLayoutHandler(void) { return m_layoutHandler; }
@@ -37,13 +35,10 @@ public:
 private:
 	std::filesystem::path m_mainDirectory;
 
-	BuildErrorHandler m_buildErrorHandler;
 	//SuggestionHandler m_suggestionHandler;
 	DragDropHandler m_dragDropHandler;
 	LayoutHandler m_layoutHandler;
 	std::unique_ptr<Preferences> m_preferences;
-
-	//std::unique_ptr<LspHandler> m_lspHandler;
 
 	Renderer *m_renderer;
 	WindowManager m_windowManager;

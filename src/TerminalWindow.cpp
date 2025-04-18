@@ -306,8 +306,8 @@ void TerminalWindow::SetCurrentDirectoryPath(const std::filesystem::path &path)
             recordingMSBuildOutput = buffer.find("MSBuild") != std::string::npos || buffer.find("msbuild") != std::string::npos;
         else if (recordingMSBuildOutput && !m_busy)
         {
-            m_application->GetBuildErrorHandler().ApplyErrorMarkersToAllEditorWindows(m_application->GetWindowManager(),
-                m_lastOutput, BuildErrorHandler::CompilerType::MSBuild);
+            /*m_application->GetBuildErrorHandler().ApplyErrorMarkersToAllEditorWindows(m_application->GetWindowManager(),
+                m_lastOutput, BuildErrorHandler::CompilerType::MSBuild);*/
             recordingMSBuildOutput = false;
         }
         /*if (!m_busy && m_lastOutput.find("MSBuild") != std::string::npos || m_lastOutput.find("msbuild") != std::string::npos)

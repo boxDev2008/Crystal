@@ -2,7 +2,7 @@
 
 #include "Window.h"
 #include "Rendering/Renderer.h"
-#include "TextEditor.h"
+#include "TextEditor/TextEditor.h"
 
 #include "PseudoTerminal.h"
 

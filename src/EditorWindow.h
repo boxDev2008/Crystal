@@ -2,7 +2,9 @@
 
 #include "Window.h"
 #include "WindowPathContainer.h"
-#include "TextEditor.h"
+#include "TextEditor/TextEditor.h"
+
+#include <tree_sitter/api.h>
 
 namespace Crystal
 {
@@ -11,7 +13,7 @@ class EditorWindow : public Window, public WindowPathContainer
 {
 public:
 	EditorWindow(const std::filesystem::path &filePath);
-	~EditorWindow(void) { }
+	~EditorWindow(void);
 
 	void RenderWindow(void);
 	void OnWindowAdded(void);
@@ -20,6 +22,9 @@ public:
 	void SaveToFile(void);
 
 	TextEditor *GetTextEditor(void) { return &m_editor; }
+
+protected:
+	void GetCurrentWord(std::string &word, int &start, int &end);
 
 private:
 	class FindReplaceHandler
@@ -40,11 +45,12 @@ private:
 		friend class EditorWindow;
 	};
 
-	// void GetCurrentWord(std::string &word, int &start, int &end);
-
 	char m_titleBuffer[1024];
+
 	TextEditor m_editor;
 	FindReplaceHandler m_findReplaceHandler;
+	TSTree *m_tree = nullptr;
+	TSParser *m_parser = nullptr;
 };
 
 }

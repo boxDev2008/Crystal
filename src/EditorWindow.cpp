@@ -2,10 +2,15 @@
 #include "Application.h"
 #include "Resources.h"
 #include "Utils.h"
+#include "CompletionMenu.h"
 
 #include <fstream>
 #include <sstream>
 #include <iostream>
+
+#include "imgui_internal.h"
+
+#include <tree_sitter/tree_sitter_cpp.h>
 
 namespace Crystal
 {
@@ -33,11 +38,94 @@ static std::string ConvertTabsToSpaces(const std::string &input, int tabWidth)
     return result;
 }
 
+void AddMultilineErrorMarker(TextEditor& editor, int startLine, int startColumn, int endLine, int endColumn, const std::string& fullMessage)
+{
+    std::istringstream stream(fullMessage);
+    std::string lineMessage;
+    int currentLine = startLine;
+
+    while (std::getline(stream, lineMessage)) {
+        int thisStartColumn = (currentLine == startLine) ? startColumn : 0;
+        int thisEndColumn = (currentLine == endLine) ? endColumn : lineMessage.size();
+
+        editor.AddErrorMarker(currentLine, thisStartColumn, thisEndColumn, lineMessage);
+        currentLine++;
+    }
+}
+
+void ExtractCompletions(TSNode node, const std::string& source, TextEditor &editor)
+{
+    if (ts_node_is_null(node)) return;
+
+    std::string type = ts_node_type(node);
+    std::string nodeText = source.substr(ts_node_start_byte(node), ts_node_end_byte(node) - ts_node_start_byte(node));
+    
+    /*std::cout << "Node Type: " << type << std::endl;
+    std::cout << "Node Text: " << nodeText << std::endl;
+    std::cout << "Start Byte: " << ts_node_start_byte(node) << ", End Byte: " << ts_node_end_byte(node) << std::endl;
+    std::cout << "Child Count: " << ts_node_child_count(node) << std::endl;
+    std::cout << "-------------------" << std::endl;*/
+
+    if (ts_node_is_error(node))
+    {
+        //std::cout << "Error: " << nodeText << '\n';
+        AddMultilineErrorMarker(editor, ts_node_start_point(node).row + 1, ts_node_start_point(node).column, ts_node_end_point(node).row + 1, ts_node_end_point(node).column, "Syntax Error");
+        //editor.AddErrorMarker(ts_node_start_point(node).row + 1, ts_node_start_point(node).column, ts_node_end_point(node).column, "Missing Symbol");
+    }
+    else if (ts_node_is_missing(node))
+    {
+        AddMultilineErrorMarker(editor, ts_node_start_point(node).row + 1, ts_node_start_point(node).column, ts_node_end_point(node).row + 1, ts_node_end_point(node).column, "Missing Symbol");
+        //editor.AddErrorMarker(ts_node_start_point(node).row + 1, ts_node_start_point(node).column, ts_node_end_point(node).column, "Missing Symbol");
+    }
+    else if (type == "identifier")
+    {
+        TSNode parent = ts_node_parent(node);
+        const char *parentType = ts_node_type(parent);
+        if (!strcmp(parentType, "function_declarator") || !strcmp(parentType, "qualified_identifier")) // function names
+            CompletionMenu::AddCompletion(nodeText);
+        else // if (!strcmp(parentType, "init_declarator") || !strcmp(parentType, "declaration")) // variable names
+            CompletionMenu::AddCompletion(nodeText);
+    }
+    else if (type == "field_identifier") // field variable names
+    {
+        CompletionMenu::AddCompletion(nodeText);
+    }
+    else if (type == "type_identifier")
+    {
+        TSNode parent = ts_node_parent(node);
+        const char *parentType = ts_node_type(parent);
+        if (!strcmp(parentType, "struct_specifier") || !strcmp(parentType, "class_specifier")) // struct/class names
+            CompletionMenu::AddCompletion(nodeText);
+    }
+    else if (type == "primitive_type")
+    {
+        CompletionMenu::AddCompletion(nodeText);            
+    }
+
+    uint32_t count = ts_node_child_count(node);
+    for (uint32_t i = 0; i < count; ++i)
+        ExtractCompletions(ts_node_child(node, i), source, editor);
+}
+
 EditorWindow::EditorWindow(const std::filesystem::path &filePath)
 {
 	SetFilePath(filePath);
+}
 
-    std::ifstream filestream(filePath);
+EditorWindow::~EditorWindow(void)
+{
+    if (m_tree)
+        ts_tree_delete(m_tree);
+
+    if (m_parser)
+        ts_parser_delete(m_parser);
+}
+
+void EditorWindow::OnWindowAdded(void)
+{
+	m_editor.SetPalette(m_application->GetPreferences().GetGlobalSettings().GetEditorPalette());
+
+    std::ifstream filestream(m_filePath);
     
     if (filestream.is_open())
 	{
@@ -47,59 +135,87 @@ EditorWindow::EditorWindow(const std::filesystem::path &filePath)
 		m_editor.SetTextChanged(false);
 		filestream.close();
     }
+
+    const char *languageName = m_editor.GetLanguageDefinitionName();
+    if (strcmp(languageName, "C++") && strcmp(languageName, "C"))
+        return;
+
+    m_parser = ts_parser_new();
+    ts_parser_set_language(m_parser, tree_sitter_cpp());
+    m_tree = ts_parser_parse_string(m_parser, nullptr, m_editor.GetText().c_str(), m_editor.GetText().size());
+    ExtractCompletions(ts_tree_root_node(m_tree), m_editor.GetText(), m_editor);
+
+    m_editor.SetRecordCallback([this](const TextEditor::UndoRecord &record) {
+        if (record.mOperations.empty())
+            return;
+
+        TSInputEdit edit{};
+
+        TSNode rootNode = ts_tree_root_node(m_tree);
+
+        for (const auto& op : record.mOperations)
+        {
+            if (op.mType == TextEditor::UndoOperationType::Delete)
+            {
+                edit.old_end_byte = ts_node_end_byte(rootNode);
+                edit.new_end_byte = edit.start_byte;
+                edit.old_end_point = ts_node_end_point(rootNode);
+                edit.new_end_point = edit.start_point;
+            }
+            else if (op.mType == TextEditor::UndoOperationType::Add)
+            {
+                edit.new_end_byte = ts_node_end_byte(rootNode);
+                edit.old_end_byte = edit.start_byte;
+                edit.new_end_point = ts_node_end_point(rootNode);
+                edit.old_end_point = edit.start_point;
+            }
+            ts_tree_edit(m_tree, &edit);
+        }
+
+        TSTree* newTree = ts_parser_parse_string(m_parser, m_tree, m_editor.GetText().c_str(), m_editor.GetText().size());
+        
+        ts_tree_delete(m_tree);
+        m_tree = newTree;
+
+        m_editor.ClearErrorMarkers();
+        CompletionMenu::ClearCompletions();
+        ExtractCompletions(ts_tree_root_node(m_tree), m_editor.GetText(), m_editor);
+    });
 }
 
-void EditorWindow::OnWindowAdded(void)
+void EditorWindow::GetCurrentWord(std::string &word, int& start, int& end)
 {
-	m_editor.SetPalette(m_application->GetPreferences().GetGlobalSettings().GetEditorPalette());
-
-	BuildErrorHandler &errorHandler = m_application->GetBuildErrorHandler();
-
-	if (!errorHandler.HasAppliedErrorMarkers())
-		return;
-
-	std::vector<BuildErrorHandler::BuildError> filteredErrors = errorHandler.FilterErrorsByPath(m_filePath);
-
-	if (filteredErrors.empty())
-		return;
-
-	TextEditor::ErrorMarkers markers;
-	for (const auto &error : filteredErrors)
-		markers.insert(std::make_pair(error.m_lineNumber - 1, error.m_errorMessage));
-	m_editor.SetErrorMarkers(markers);
-}
-
-/*void EditorWindow::GetCurrentWord(std::string &word, int& start, int& end)
-{
-    std::string line = m_editor.GetCurrentLineText();
-    const int cursorPosition = m_editor.GetCursorPosition().mColumn;
+	TextEditor::Coordinates cursorPosition;
+	m_editor.GetCursorPosition(cursorPosition.mLine, cursorPosition.mColumn);
+    std::string line = m_editor.GetTextLines()[cursorPosition.mLine];
+    const int cursorPositionColumn = cursorPosition.mColumn;
 
 	line = ConvertTabsToSpaces(line, m_editor.GetTabSize());
 
     if (line.empty())
 	{
         word.clear();
-        start = end = cursorPosition;
+        start = end = cursorPositionColumn;
         return;
     }
 
     // Check if the cursor is at the beginning of a word
-    if (cursorPosition < line.size() && !Utils::isDelimiter(line[cursorPosition]))
+    if (cursorPositionColumn < line.size() && !Utils::isDelimiter(line[cursorPositionColumn]))
     {
-        if (cursorPosition == 0 || Utils::isDelimiter(line[cursorPosition - 1]))
+        if (cursorPositionColumn == 0 || Utils::isDelimiter(line[cursorPositionColumn - 1]))
         {
             // The cursor is at the beginning of a word
             word.clear();
-            start = end = cursorPosition;
+            start = end = cursorPositionColumn;
             return;
         }
     }
 
-    start = cursorPosition;
+    start = cursorPositionColumn;
     while (start > 0 && !Utils::isDelimiter(line[start - 1]))
         --start;
 
-    end = cursorPosition;
+    end = cursorPositionColumn;
     while (end < line.size() && !Utils::isDelimiter(line[end]))
         ++end;
 
@@ -107,105 +223,57 @@ void EditorWindow::OnWindowAdded(void)
         word = line.substr(start, end - start);
     else
         word.clear();
-}*/
+}
 
 void EditorWindow::RenderWindow(void)
 {
-	//int start, end;
-	//ImVec2 windowPosition;
+    ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetMainDockID(), ImGuiCond_Appearing);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 
-	ImGui::SetNextWindowDockID(m_application->GetLayoutHandler().GetMainDockID(), ImGuiCond_Appearing);
+    ImGuiWindowFlags flags = m_editor.IsTextChanged() ? ImGuiWindowFlags_UnsavedDocument : 0;
+    
+    if (ImGui::Begin(m_titleBuffer, &m_opened, flags))
+    {
+        PlatformWindow &mainWindow = m_application->GetMainWindow();
+        WindowManager &wm = m_application->GetWindowManager();
+        Preferences &preferences = m_application->GetPreferences();
+        Preferences::EditorSettings &settings = preferences.GetEditorSettings();
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+        m_editor.SetTabSize(settings.tabSize);
+        m_editor.SetLineSpacing(settings.lineSpacing);
+        m_editor.SetShowLineNumbersEnabled(settings.showLineNumbers);
+        m_editor.SetShowWhitespacesEnabled(settings.showWhitespaces);
+        m_editor.SetShortTabsEnabled(settings.shortTabs);
+        m_editor.SetAutoIndentEnabled(settings.autoIndent);
 
-	ImGuiWindowFlags flags = m_editor.IsTextChanged() ? ImGuiWindowFlags_UnsavedDocument : 0;
-	if (ImGui::Begin(m_titleBuffer, &m_opened, flags))
-	{
-		PlatformWindow &mainWindow = m_application->GetMainWindow();
-		WindowManager &wm = m_application->GetWindowManager();
-		Preferences &preferences = m_application->GetPreferences();
+        ImGui::BeginChild("##Editor");
+        ImGui::SetWindowFontScale(preferences.GetGlobalSettings().editorFontSize / 24.0f / ImGui::GetIO().FontGlobalScale);
 
-		//SuggestionHandler &suggestionHandler = m_application->GetSuggestionHandler();
-		Preferences::EditorSettings &settings = preferences.GetEditorSettings();
-		m_editor.SetTabSize(settings.tabSize);
-		m_editor.SetLineSpacing(settings.lineSpacing);
-		m_editor.SetShowLineNumbersEnabled(settings.showLineNumbers);
-		m_editor.SetShowWhitespacesEnabled(settings.showWhitespaces);
-		m_editor.SetShortTabsEnabled(settings.shortTabs);
-		m_editor.SetAutoIndentEnabled(settings.autoIndent);
+        const bool isFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+        
+        if (wm.GetLastEditorWindow() != this && isFocused)
+            wm.SetLastEditorWindow(this);
 
-		//m_findReplaceHandler.Render(m_editor);
+        if (wm.GetLastEditorWindow() == this && m_tree)
+        {
+            static std::string word;
+            static int32_t start, end;
+            GetCurrentWord(word, start, end); 
+            CompletionMenu::SetCurrentWord(word, start, end);
+            CompletionMenu::RenderCompletionMenu(this, m_application);
+        }
 
-		/*std::string word;
-		GetCurrentWord(word, start, end);
-		suggestionHandler.FilterSuggestions(word);
+        m_editor.Render(m_titleBuffer);
+        m_editor.SetReadOnlyEnabled(false);
 
-		static bool focusSuggestions = false;
-		const bool hasSuggestions = suggestionHandler.HasSuggestions();
+        ImGui::EndChild();
 
-		if (ImGui::IsWindowFocused())
-			ImGui::SetNextWindowFocus();
+        if (isFocused && wm.GetLastEditorWindow() != this)
+            wm.SetLastEditorWindow(this);
+    }
 
-		bool isWindowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows);
-
-		if (isWindowFocused)
-		{
-			if (wm.GetLastWindow() != this)
-				wm.SetLastWindow(this);
-			
-			if (hasSuggestions && ImGui::IsKeyPressed(ImGuiKey_Tab))
-			{
-				m_editor.SetReadOnly(true);
-				focusSuggestions = true;
-			}
-		}
-
-		m_editor.Render(c_title);
-
-		if (hasSuggestions)
-		{
-			m_editor.SetReadOnly(false);
-
-			if (wm.GetLastWindow() == this)
-			{
-				if (m_editor.IsFocused())
-					ImGui::OpenPopup("##Suggestions");
-				suggestionHandler.RenderSuggestions(m_editor, word, ImGui::GetWindowPos(), focusSuggestions, start, end);
-			}
-		}*/
-
-		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && wm.GetLastEditorWindow() != this)
-			wm.SetLastEditorWindow(this);
-
-		ImGui::SetWindowFontScale(preferences.GetGlobalSettings().editorFontSize / 24.0f / ImGui::GetIO().FontGlobalScale);
-		m_editor.Render(m_titleBuffer);
-		ImGui::SetWindowFontScale(1.0f);
-	}
-
-	ImGui::End();
-
-	/*if (wm.GetLastEditorWindow() == this)
-	{
-		if (ImGui::Begin("##BottomMenuBar", nullptr, ImGuiWindowFlags_NoScrollbar))
-		{
-			int32_t line, column;
-			m_editor.GetCursorPosition(line, column);
-
-			char buffer[128];
-			sprintf(buffer, "Ln %i, Col %i  Tab Size: %i  %s",
-				line + 1, column + 1, m_editor.GetTabSize(), m_editor.GetLanguageDefinitionName());
-
-			ImVec2 windowSize = ImGui::GetWindowSize();
-
-			ImVec2 textSize = ImGui::CalcTextSize(buffer, nullptr, true, windowSize.x);
-			ImGui::SetCursorPosX((windowSize.x - textSize.x) * 0.5f);
-
-			ImGui::TextUnformatted(buffer);
-		}
-		ImGui::End();
-	}*/
-
-	ImGui::PopStyleVar();
+    ImGui::End();
+    ImGui::PopStyleVar();
 }
 
 void EditorWindow::SetFilePath(const std::filesystem::path &path)

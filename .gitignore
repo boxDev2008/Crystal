@@ -13,3 +13,4 @@ obj/
 Makefile
 bin/*.exe
 bin/Release/Preferences.json
+.qodo

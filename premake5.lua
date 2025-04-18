@@ -4,7 +4,7 @@ workspace "Crystal"
     architecture "x64"
 
 project "Crystal"
-    kind "WindowedApp"
+    kind "ConsoleApp"
     language "C++"
     cppdialect "C++17"
     targetdir "bin/%{cfg.buildcfg}"
@@ -14,7 +14,9 @@ project "Crystal"
         "vendor/glfw/**.h", "vendor/glfw/**.c",
         "vendor/imgui/*.h", "vendor/imgui/*.cpp",
         "vendor/ImGuiFileDialog/*.cpp", "vendor/ImGuiFileDialog/*.h",
-        "vendor/tiny-process/*.cpp", "vendor/tiny-process/*.h"
+        "vendor/tiny-process/*.cpp", "vendor/tiny-process/*.h",
+        "vendor/tree-sitter/**.c", "vendor/tree-sitter/**.h",
+        "vendor/TextEditor/*.h", "vendor/TextEditor/*.cpp"
     }
 
     includedirs {
@@ -23,7 +25,8 @@ project "Crystal"
         "vendor",
         "vendor/imgui",
         "vendor/ImGuiFileDialog",
-        "vendor/glfw/include"
+        "vendor/glfw/include",
+        "vendor/tree-sitter/include"
     }
 
     libdirs { "bin/%{cfg.buildcfg}" }

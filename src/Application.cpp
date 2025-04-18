@@ -1,6 +1,5 @@
 #include "Application.h"
 #include "Window.h"
-#include "WizardWindow.h"
 #include "EditorWindow.h"
 #include "ImageWindow.h"
 #include "PreferencesWindow.h"
@@ -348,8 +347,6 @@ Application::Application(void)
 	m_dragDropHandler = DragDropHandler(this);
 
 	m_preferences = std::make_unique<Preferences>(m_mainWindow, m_windowManager);
-
-	//m_windowManager.AddWindow(new WizardWindow());
 
 	while (m_mainWindow->IsRunning())
 	{

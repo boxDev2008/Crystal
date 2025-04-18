@@ -7,10 +7,12 @@
 #include <cctype>
 #include <vector>
 
-#if CRYSTAL_PLATFORM_WINDOWS
+#include <tree_sitter/api.h>
+#include <tree_sitter/tree_sitter_cpp.h>
+
+#if 0
 #include <windows.h>
 
-fdsafdsaf
 int WinMain(
     HINSTANCE   hInstance,
     HINSTANCE   hPrevInstance,
