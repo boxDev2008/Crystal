@@ -263,9 +263,22 @@ void Application::OnRender(void)
 	ImGui::PopStyleColor();
 
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
-	if (ImGui::BeginViewportSideBar("##BottomStatusBar", NULL, ImGuiDir_Down, 32, window_flags)) {
-		if (ImGui::BeginMenuBar()) {
-			ImGui::Text("Happy status bar");
+	if (ImGui::BeginViewportSideBar("##BottomStatusBar", NULL, ImGuiDir_Down, style.FramePadding.y * 2 + iconSize - 1, window_flags))
+	{
+		if (ImGui::BeginMenuBar())
+		{
+			EditorWindow *last = dynamic_cast<EditorWindow*>(m_windowManager.GetLastEditorWindow());
+			if (last)
+			{
+				TextEditor *editor = last->GetTextEditor();
+				int32_t line, column;
+				editor->GetCursorPosition(line, column);
+				ImGui::Text("%s", editor->GetLanguageDefinitionName());
+				ImGui::SameLine(); ImGui::Dummy(ImVec2(16, 0));
+				ImGui::Text("Tab Size: %d", editor->GetTabSize());
+				ImGui::SameLine(); ImGui::Dummy(ImVec2(16, 0));
+				ImGui::Text("Ln %d, Col %d", line, column);
+			}
 			ImGui::EndMenuBar();
 		}
 	}

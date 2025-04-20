@@ -6,6 +6,9 @@
 namespace Crystal
 {
 
+WindowManager::WindowManager(Application *application) :
+	m_application(application) { }
+
 Window *WindowManager::CheckForWindowWithPath(const std::filesystem::path &path)
 {
 	for (Window *window : m_windows)

@@ -281,6 +281,8 @@ public:
 	void SetViewAtLine(int aLine, SetViewAtLineMode aMode);
 
 	int GetCharacterColumn(int aLine, int aIndex) const;
+	int GetCharacterIndexL(const Coordinates& aCoordinates) const;
+	int GetCharacterIndexR(const Coordinates& aCoordinates) const;
 
 	void InsertTextAtCursor(const char* aValue, int aCursor = -1);
 	float TextDistanceToLineStart(const Coordinates& aFrom, bool aSanitizeCoords = true) const;
@@ -289,6 +291,7 @@ public:
 	void Copy();
 	void Cut();
 	void Paste();
+	void ReplacePaste(const std::string &aText);
 	void Undo(int aSteps = 1);
 	void Redo(int aSteps = 1);
 	inline bool CanUndo() const { return !mReadOnly && mUndoIndex > 0; };
@@ -298,8 +301,6 @@ public:
 	float GetScrollX() const { return mScrollX; }
 	float GetScrollY() const { return mScrollY; }
 
-	EditorState GetState() const { return mState; }
-	void AddUndo(UndoRecord& aValue);
 	void SetRecordCallback(std::function<void(const UndoRecord &)> aCallback) { mRecordCallback = aCallback; }
 
 	void SetText(const std::string& aText);
@@ -400,8 +401,6 @@ private:
 	Coordinates ScreenPosToCoordinates(const ImVec2& aPosition, bool aInsertionMode = false, bool* isOverLineNumber = nullptr) const;
 	Coordinates FindWordStart(const Coordinates& aFrom) const;
 	Coordinates FindWordEnd(const Coordinates& aFrom) const;
-	int GetCharacterIndexL(const Coordinates& aCoordinates) const;
-	int GetCharacterIndexR(const Coordinates& aCoordinates) const;
 	int GetFirstVisibleCharacterIndex(int aLine) const;
 	int GetLineMaxColumn(int aLine, int aLimit = -1) const;
 
@@ -428,7 +427,11 @@ private:
 	void ColorizeRange(int aFromLine = 0, int aToLine = 0);
 	void ColorizeInternal();
 
+	void AddUndo(UndoRecord& aValue);
+
 	void RefreshScrollPosition();
+
+	EditorState GetState() const { return mState; }
 
 	std::vector<Line> mLines;
 	EditorState mState;

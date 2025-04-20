@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EditorWindow.h"
+#include "Window.h"
 #include <vector>
 
 namespace Crystal
@@ -11,10 +11,7 @@ class WindowManager
 {
 public:
     WindowManager(void) = default;
-    WindowManager(Application *application)
-    {
-        m_application = application;
-    }
+    WindowManager(Application *application);
 
 	void RenderAllWindows(void);
 	void ManageFreedCache(void);

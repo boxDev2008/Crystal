@@ -1,24 +1,46 @@
 #pragma once
 
-#include "EditorWindow.h"
-#include "Application.h"
-
-#include <unordered_set>
+#include <unordered_map>
+#include <vector>
 #include <string>
 #include <cstdint>
 
 namespace Crystal
 {
+
+enum CompletionType
+{
+	COMPLETION_TYPE_FUNCTION,
+	COMPLETION_TYPE_VARIABLE,
+	COMPLETION_TYPE_TYPE,
+	COMPLETION_TYPE_NAMESPACE
+};
+
+class Application;
+class EditorWindow;
 class CompletionMenu
 {
 public:
-    static void SetCurrentWord(const std::string &word, int32_t wordStart, int32_t wordEnd);
+	CompletionMenu(void) = default;
+	CompletionMenu(EditorWindow *parentWindow, Application *application);
+    void SetCurrentWord(const std::string &word, int32_t wordStart, int32_t wordEnd);
 
-    static void ClearCompletions(void);
-    static void AddCompletion(const std::string &completion);
-    static void RenderCompletionMenu(EditorWindow *parentWindow, Application *application);
+    void ClearCompletions(void);
+    void AddCompletion(const std::string &completion, CompletionType type);
+    void Render(void);
 
 private:
-    static bool FilterCompletions(void);
+    bool FilterCompletions(void);
+
+	bool m_active = false;
+
+    int32_t m_wordStart, m_wordEnd;
+    std::string m_word;
+
+    std::unordered_map<std::string, CompletionType> m_completions{};
+    std::unordered_map<std::string, CompletionType> m_filteredCompletions{};
+
+	EditorWindow *m_parentWindow;
+	Application *m_application;
 };
 }

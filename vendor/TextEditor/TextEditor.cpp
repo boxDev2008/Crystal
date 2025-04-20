@@ -267,6 +267,89 @@ void TextEditor::Paste()
 	}
 }
 
+void TextEditor::ReplacePaste(const std::string &aText)
+{
+	if (mReadOnly)
+		return;
+
+	std::string clipText = aText;
+	bool canPasteToMultipleCursors = false;
+	std::vector<std::pair<int, int>> clipTextLines;
+
+	if (mState.mCurrentCursor > 0)
+	{
+		clipTextLines.push_back({ 0,0 });
+		for (int i = 0; i < clipText.length(); i++)
+		{
+			if (clipText[i] == '\n')
+			{
+				clipTextLines.back().second = i;
+				clipTextLines.push_back({ i + 1, 0 });
+			}
+		}
+		clipTextLines.back().second = clipText.length();
+		canPasteToMultipleCursors = clipTextLines.size() == mState.mCurrentCursor + 1;
+	}
+
+	if (clipText.length() > 0)
+	{
+		UndoRecord u;
+		u.mBefore = mState;
+
+		// Step 1: Delete selection if any
+		if (AnyCursorHasSelection())
+		{
+			for (int c = mState.mCurrentCursor; c > -1; c--)
+			{
+				if (!mState.mCursors[c].HasSelection())
+					continue;
+				u.mOperations.push_back({ GetSelectedText(c), mState.mCursors[c].GetSelectionStart(), mState.mCursors[c].GetSelectionEnd(), UndoOperationType::Delete });
+				DeleteSelection(c);
+			}
+		}
+		else
+		{
+			// Step 2: No selection, perform backspace in word mode
+			EditorState stateBeforeBackspace = mState;
+			Backspace(true);
+
+			// Collect deleted text for undo
+			for (int c = mState.mCurrentCursor; c > -1; c--)
+			{
+				if (stateBeforeBackspace.mCursors[c].GetSelectionStart() != mState.mCursors[c].GetSelectionStart())
+				{
+					u.mOperations.push_back({
+						"", // You can optionally extract deleted text if needed
+						stateBeforeBackspace.mCursors[c].GetSelectionStart(),
+						stateBeforeBackspace.mCursors[c].GetSelectionEnd(),
+						UndoOperationType::Delete
+					});
+				}
+			}
+		}
+
+		// Step 3: Paste the text
+		for (int c = mState.mCurrentCursor; c > -1; c--)
+		{
+			Coordinates start = GetActualCursorCoordinates(c);
+			if (canPasteToMultipleCursors)
+			{
+				std::string clipSubText = clipText.substr(clipTextLines[c].first, clipTextLines[c].second - clipTextLines[c].first);
+				InsertTextAtCursor(clipSubText.c_str(), c);
+				u.mOperations.push_back({ clipSubText, start, GetActualCursorCoordinates(c), UndoOperationType::Add });
+			}
+			else
+			{
+				InsertTextAtCursor(clipText.c_str(), c);
+				u.mOperations.push_back({ clipText, start, GetActualCursorCoordinates(c), UndoOperationType::Add });
+			}
+		}
+
+		u.mAfter = mState;
+		AddUndo(u);
+	}
+}
+
 void TextEditor::Undo(int aSteps)
 {
 	while (CanUndo() && aSteps-- > 0)
