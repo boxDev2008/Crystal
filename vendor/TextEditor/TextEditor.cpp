@@ -2393,7 +2393,7 @@ void TextEditor::Render(bool aParentIsFocused)
 			auto start = ImVec2(lineStartScreenPos.x + mScrollX, lineStartScreenPos.y);
 			auto contentSize = ImGui::GetWindowContentRegionMax();
 
-			const ImVec2 highlightStart = ImVec2(start.x + mTextStart, start.y);
+			//const ImVec2 highlightStart = ImVec2(start.x + mTextStart, start.y);
 
 			// Draw line number (right aligned)
 			if (mShowLineNumbers)
@@ -2417,8 +2417,8 @@ void TextEditor::Render(bool aParentIsFocused)
 				if (!AnyCursorHasSelection())
 				{
 					auto end = ImVec2(start.x + contentSize.x + mScrollX, start.y + mCharAdvance.y);
-					drawList->AddRectFilled(highlightStart, end, mPalette[(int)(focused ? PaletteIndex::CurrentLineFill : PaletteIndex::CurrentLineFillInactive)]);
-					drawList->AddRect(highlightStart, end, mPalette[(int)PaletteIndex::CurrentLineEdge], 1.0f);
+					drawList->AddRectFilled(start, end, mPalette[(int)(focused ? PaletteIndex::CurrentLineFill : PaletteIndex::CurrentLineFillInactive)]);
+					drawList->AddRect(start, end, mPalette[(int)PaletteIndex::CurrentLineEdge], 1.0f);
 				}
 
 				// Render the cursors

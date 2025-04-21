@@ -38,9 +38,9 @@ private:
 	//SuggestionHandler m_suggestionHandler;
 	DragDropHandler m_dragDropHandler;
 	LayoutHandler m_layoutHandler;
-	std::unique_ptr<Preferences> m_preferences;
 
 	Renderer *m_renderer;
+	Preferences *m_preferences;
 	WindowManager m_windowManager;
 	PlatformWindow *m_mainWindow;
 };

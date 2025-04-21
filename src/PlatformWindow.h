@@ -19,7 +19,7 @@ struct PlatformWindowSettings
     const char *title;
     const char *iconPath;
 
-    static const PlatformWindowSettings Default(void) { return { 1440, 900, 400, 200, "Crystal", "res/logo-small.png" }; };
+    static const PlatformWindowSettings Default(void) { return { 1440, 900, 400, 200, "Crystal", "res/icon.png" }; };
 };
 
 class PlatformWindow

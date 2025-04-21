@@ -139,33 +139,16 @@ void EditorWindow::OnWindowAdded(void)
         if (record.mOperations.empty())
             return;
 
-        TSInputEdit edit{};
-
-        TSNode rootNode = ts_tree_root_node(m_tree);
+        //TSNode rootNode = ts_tree_root_node(m_tree);
 
         for (const auto& op : record.mOperations)
         {
-            if (op.mType == TextEditor::UndoOperationType::Delete)
-            {
-                edit.old_end_byte = ts_node_end_byte(rootNode);
-                edit.new_end_byte = edit.start_byte;
-                edit.old_end_point = ts_node_end_point(rootNode);
-                edit.new_end_point = edit.start_point;
-            }
-            else if (op.mType == TextEditor::UndoOperationType::Add)
-            {
-                edit.new_end_byte = ts_node_end_byte(rootNode);
-                edit.old_end_byte = edit.start_byte;
-                edit.new_end_point = ts_node_end_point(rootNode);
-                edit.old_end_point = edit.start_point;
-            }
-            ts_tree_edit(m_tree, &edit);
+			TSInputEdit inputEdit = TreeEditForUndoOperation(op, m_editor.GetTextLines());
+			ts_tree_edit(m_tree, &inputEdit);
+			TSTree *newTree = ts_parser_parse_string(m_parser, m_tree, m_editor.GetText().c_str(), m_editor.GetText().size());
+			ts_tree_delete(m_tree);
+			m_tree = newTree;
         }
-
-        TSTree* newTree = ts_parser_parse_string(m_parser, m_tree, m_editor.GetText().c_str(), m_editor.GetText().size());
-        
-        ts_tree_delete(m_tree);
-        m_tree = newTree;
 
         m_editor.ClearErrorMarkers();
         m_completionMenu.ClearCompletions();

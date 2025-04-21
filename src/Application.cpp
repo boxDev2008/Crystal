@@ -359,7 +359,7 @@ Application::Application(void)
 	m_windowManager = WindowManager(this);
 	m_dragDropHandler = DragDropHandler(this);
 
-	m_preferences = std::make_unique<Preferences>(m_mainWindow, m_windowManager);
+	m_preferences = new Preferences(m_mainWindow, m_windowManager);
 
 	while (m_mainWindow->IsRunning())
 	{
@@ -377,6 +377,7 @@ Application::Application(void)
 	delete m_renderer;
 	ImGui::DestroyContext();
 
+	delete m_preferences;
 	delete m_mainWindow;
 }
 void Application::SetMainDirectoryPath(const std::filesystem::path &path)
