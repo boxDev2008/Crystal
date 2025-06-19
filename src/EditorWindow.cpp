@@ -6,6 +6,8 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <stack>
+#include <chrono>
 
 #include "imgui_internal.h"
 
@@ -14,7 +16,47 @@
 namespace Crystal
 {
 
-void AddMultilineErrorMarker(TextEditor& editor, int startLine, int startColumn, int endLine, int endColumn, const std::string& fullMessage)
+static TSPoint ToTSPoint(const TextEditor::Coordinates& coords)
+{
+    return TSPoint{ (uint32_t)coords.mLine, (uint32_t)coords.mColumn };
+}
+
+static TSInputEdit ConvertUndoToInputEdit(const TextEditor::UndoOperation& op, const TextEditor& editor, const std::vector<std::string> &lines)
+{
+    TSPoint startPoint = ToTSPoint(op.mStart);
+    TSPoint oldEndPoint = ToTSPoint(op.mEnd);
+    TSPoint newEndPoint = startPoint;
+
+    /*std::cout << "Undo Operation: " << startPoint.row << " " << startPoint.column << " " << oldEndPoint.row << " " << oldEndPoint.column << std::endl;
+    std::cout << "Text size: " << op.mText.size() << std::endl;
+    std::cout << "Type: " << (op.mType == TextEditor::UndoOperationType::Add ? "Add" : "Delete") << std::endl;
+    std::cout << op.mText << std::endl;*/
+
+    uint32_t startIndex = editor.GetGlobalIndexFromPosition(op.mStart);
+    uint32_t oldEndIndex = startIndex;
+    uint32_t newEndIndex = startIndex;
+
+    //std::cout << "Start index: " << startIndex << std::endl;
+
+    if (op.mType == TextEditor::UndoOperationType::Delete)
+        oldEndIndex += op.mText.size();
+    else if (op.mType == TextEditor::UndoOperationType::Add)
+    {
+        newEndIndex += op.mText.size();
+        newEndPoint.column += (uint32_t)op.mText.size();
+    }
+
+    return TSInputEdit{
+        startIndex,
+        oldEndIndex,
+        newEndIndex,
+        startPoint,
+        oldEndPoint,
+        newEndPoint
+    };
+}
+
+void EditorWindow::AddMultilineErrorMarker(TextEditor& editor, int startLine, int startColumn, int endLine, int endColumn, const std::string& fullMessage)
 {
     std::istringstream stream(fullMessage);
     std::string lineMessage;
@@ -30,13 +72,13 @@ void AddMultilineErrorMarker(TextEditor& editor, int startLine, int startColumn,
     }
 }
 
-void ExtractCompletions(TSNode node, const std::string& source, TextEditor &editor, CompletionMenu &menu)
+void EditorWindow::ExtractCompletions(TSNode node, const std::string& source)
 {
     if (ts_node_is_null(node)) return;
 
     std::string type = ts_node_type(node);
     std::string nodeText = source.substr(ts_node_start_byte(node), ts_node_end_byte(node) - ts_node_start_byte(node));
-    
+
     /*std::cout << "Node Type: " << type << std::endl;
     std::cout << "Node Text: " << nodeText << std::endl;
     std::cout << "Start Byte: " << ts_node_start_byte(node) << ", End Byte: " << ts_node_end_byte(node) << std::endl;
@@ -45,13 +87,12 @@ void ExtractCompletions(TSNode node, const std::string& source, TextEditor &edit
 
     if (ts_node_is_error(node))
     {
-        //std::cout << "Error: " << nodeText << '\n';
-        AddMultilineErrorMarker(editor, ts_node_start_point(node).row + 1, ts_node_start_point(node).column, ts_node_end_point(node).row + 1, ts_node_end_point(node).column, "Syntax Error");
+        AddMultilineErrorMarker(m_editor, ts_node_start_point(node).row + 1, ts_node_start_point(node).column, ts_node_end_point(node).row + 1, ts_node_end_point(node).column, "Syntax Error");
         //editor.AddErrorMarker(ts_node_start_point(node).row + 1, ts_node_start_point(node).column, ts_node_end_point(node).column, "Missing Symbol");
     }
     else if (ts_node_is_missing(node))
     {
-        AddMultilineErrorMarker(editor, ts_node_start_point(node).row + 1, ts_node_start_point(node).column, ts_node_end_point(node).row + 1, ts_node_end_point(node).column, "Missing Symbol");
+        AddMultilineErrorMarker(m_editor, ts_node_start_point(node).row + 1, ts_node_start_point(node).column, ts_node_end_point(node).row + 1, ts_node_end_point(node).column, "Missing Symbol");
         //editor.AddErrorMarker(ts_node_start_point(node).row + 1, ts_node_start_point(node).column, ts_node_end_point(node).column, "Missing Symbol");
     }
     else if (type == "identifier")
@@ -59,36 +100,26 @@ void ExtractCompletions(TSNode node, const std::string& source, TextEditor &edit
         TSNode parent = ts_node_parent(node);
         const char *parentType = ts_node_type(parent);
         if (!strcmp(parentType, "function_declarator") || !strcmp(parentType, "qualified_identifier")) // function names
-		{
-			menu.AddCompletion(nodeText, COMPLETION_TYPE_FUNCTION);
-			//parameter_list
-		}
-        else // if (!strcmp(parentType, "init_declarator") || !strcmp(parentType, "declaration")) // variable names
-			menu.AddCompletion(nodeText, COMPLETION_TYPE_VARIABLE);
+            m_completionMenu.AddCompletion(nodeText, COMPLETION_TYPE_FUNCTION);
+        else m_completionMenu.AddCompletion(nodeText, COMPLETION_TYPE_VARIABLE);
     }
-    else if (type == "field_identifier") // field variable names
-    {
-        menu.AddCompletion(nodeText, COMPLETION_TYPE_VARIABLE);
-    }
+    else if (type == "field_identifier")
+        m_completionMenu.AddCompletion(nodeText, COMPLETION_TYPE_VARIABLE);
     else if (type == "type_identifier")
     {
         TSNode parent = ts_node_parent(node);
         const char *parentType = ts_node_type(parent);
-        if (!strcmp(parentType, "struct_specifier") || !strcmp(parentType, "class_specifier")) // struct/class names
-			menu.AddCompletion(nodeText, COMPLETION_TYPE_TYPE);
+        if (!strcmp(parentType, "struct_specifier") || !strcmp(parentType, "class_specifier") || !strcmp(parentType, "class_specifier"))
+            m_completionMenu.AddCompletion(nodeText, COMPLETION_TYPE_TYPE);
     }
     else if (type == "primitive_type")
-    {
-        menu.AddCompletion(nodeText, COMPLETION_TYPE_TYPE);            
-    }
-	else if (type == "namespace_identifier")
-	{
-		menu.AddCompletion(nodeText, COMPLETION_TYPE_NAMESPACE);
-	}
+        m_completionMenu.AddCompletion(nodeText, COMPLETION_TYPE_TYPE);
+    else if (type == "namespace_identifier")
+        m_completionMenu.AddCompletion(nodeText, COMPLETION_TYPE_NAMESPACE);
 
     uint32_t count = ts_node_child_count(node);
     for (uint32_t i = 0; i < count; ++i)
-        ExtractCompletions(ts_node_child(node, i), source, editor, menu);
+        ExtractCompletions(ts_node_child(node, i), source);
 }
 
 EditorWindow::EditorWindow(const std::filesystem::path &filePath)
@@ -130,29 +161,45 @@ void EditorWindow::OnWindowAdded(void)
 	
 	m_completionMenu = CompletionMenu(this, m_application);
 
+    std::string &text = m_editor.GetText();
+
     m_parser = ts_parser_new();
     ts_parser_set_language(m_parser, tree_sitter_cpp());
-    m_tree = ts_parser_parse_string(m_parser, nullptr, m_editor.GetText().c_str(), m_editor.GetText().size());
-    ExtractCompletions(ts_tree_root_node(m_tree), m_editor.GetText(), m_editor, m_completionMenu);
+    m_tree = ts_parser_parse_string(m_parser, nullptr, text.c_str(), text.size());
+    ExtractCompletions(ts_tree_root_node(m_tree), text);
 
-    m_editor.SetRecordCallback([this](const TextEditor::UndoRecord &record) {
-        if (record.mOperations.empty())
+    m_editor.SetRecordCallback([this](const TextEditor::UndoRecord &_record) {
+        if (_record.mOperations.empty())
             return;
 
-        //TSNode rootNode = ts_tree_root_node(m_tree);
+        TextEditor::UndoRecord record = _record;
 
-        for (const auto& op : record.mOperations)
+        //auto start = std::chrono::high_resolution_clock::now();
+
+        std::string &text = m_editor.GetText();
+        std::vector<std::string> &lines = m_editor.GetTextLines();
+
+        if (record.mTSFlags & TextEditor::TSFlag::ReverseOperation)
+            std::reverse(record.mOperations.begin(), record.mOperations.end());
+
+        for (int i = (int)record.mOperations.size() - 1; i >= 0; --i)
+        //for (int i = 0; i < (int)record.mOperations.size(); ++i)
         {
-			TSInputEdit inputEdit = TreeEditForUndoOperation(op, m_editor.GetTextLines());
-			ts_tree_edit(m_tree, &inputEdit);
-			TSTree *newTree = ts_parser_parse_string(m_parser, m_tree, m_editor.GetText().c_str(), m_editor.GetText().size());
-			ts_tree_delete(m_tree);
-			m_tree = newTree;
+            TSInputEdit edit = ConvertUndoToInputEdit(record.mOperations[i], m_editor, lines);
+            ts_tree_edit(m_tree, &edit);
         }
+
+        TSTree *newTree = ts_parser_parse_string(m_parser, m_tree, text.c_str(), text.size());
+        ts_tree_delete(m_tree);
+        m_tree = newTree;
 
         m_editor.ClearErrorMarkers();
         m_completionMenu.ClearCompletions();
-        ExtractCompletions(ts_tree_root_node(m_tree), m_editor.GetText(), m_editor, m_completionMenu);
+        ExtractCompletions(ts_tree_root_node(m_tree), text);
+
+        //auto end = std::chrono::high_resolution_clock::now();
+        //std::cout << "Time taken to parse: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+
     });
 }
 
@@ -236,7 +283,7 @@ void EditorWindow::RenderWindow(void)
             m_completionMenu.Render();
         }
 
-		//m_findReplaceHandler.Render(m_editor);
+		m_findReplaceHandler.Render(m_editor);
 
         m_editor.Render(m_titleBuffer);
         m_editor.SetReadOnlyEnabled(false);
@@ -258,35 +305,35 @@ void EditorWindow::SetFilePath(const std::filesystem::path &path)
 
 	std::filesystem::path extension = m_filePath.extension();
 	if (extension == ".cpp" || extension == ".hpp" || extension == ".h")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Cpp());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Cpp);
 	else if (extension == ".c")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::C());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::C);
 	else if (extension == ".cs")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Cs());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Cs);
 	else if (extension == ".hlsl")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Hlsl());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Hlsl);
 	else if (extension == ".glsl" || extension == ".shader" || extension == ".vert" || extension == ".frag")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Glsl());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Glsl);
 	else if (extension == ".py")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Python());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Python);
 	else if (extension == ".lua")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Lua());
-	else if (extension == ".rs")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Rust());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Lua);
+	/*else if (extension == ".rs")
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Rust);
 	else if (extension == ".js" || extension == ".ts")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::JavaScript());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Javascript);*/
 	else if (extension == ".json")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Json());
-	else if (extension == ".ini")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Ini());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Json);
+	/*else if (extension == ".ini")
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Ini);
 	else if (extension == ".html")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Html());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Html);
 	else if (extension == ".css")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Css());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Css);
 	else if (extension == ".gml")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Gml());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Gml);*/
 	else
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Text());
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::None);
 }
 
 void EditorWindow::SaveToFile(void)
@@ -313,13 +360,15 @@ void EditorWindow::FindReplaceHandler::FindAll(TextEditor &editor, const std::st
 void EditorWindow::FindReplaceHandler::ReplaceNext(TextEditor &editor, const std::string &word, const std::string &replacement)
 {
 	editor.SelectNextOccurrenceOf(word.c_str(), word.length(), m_caseSensitive);
-	editor.ReplacePaste(replacement.c_str());
+    if (editor.AnyCursorHasSelection())
+	    editor.ReplacePaste(replacement.c_str());
 }
 
 void EditorWindow::FindReplaceHandler::ReplaceAll(TextEditor &editor, const std::string &word, const std::string &replacement)
 {
 	editor.SelectAllOccurrencesOf(word.c_str(), word.length(), m_caseSensitive);
-	editor.ReplacePaste(replacement.c_str());
+    if (editor.AnyCursorHasSelection())
+	    editor.ReplacePaste(replacement.c_str());
 }
 
 void EditorWindow::FindReplaceHandler::Render(TextEditor &editor)

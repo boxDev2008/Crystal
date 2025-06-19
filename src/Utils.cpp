@@ -20,7 +20,7 @@ bool isWhitespace(char c)
 bool isBoundaryChar(char c)
 {
     return isspace(c) || ispunct(c) || c == '(' || c == ')' || c == '{' || c == '}' ||
-        c == '[' || c == ']' || c == '<' || c == '>' || c == ';' || c == ',' && c != '_';
+        c == '[' || c == ']' || c == '<' || c == '>' || c == ';' || c == ',' && c != '_' && c != '~';
 }
 
 std::string toLower(const std::string &str)

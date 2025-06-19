@@ -10,7 +10,7 @@
 namespace Crystal 
 {
 
-#define APP_USE_UNLIMITED_FRAME_RATE
+//#define APP_USE_UNLIMITED_FRAME_RATE
 
 #ifdef _DEBUG
 #define APP_USE_VULKAN_DEBUG_REPORT
@@ -566,16 +566,14 @@ void VulkanRenderer::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t 
     EndSingleTimeCommands(commandBuffer);
 }
 
-Texture *VulkanRenderer::CreateTexture(const char *file, Filter filter)
+Texture *VulkanRenderer::CreateTexture(uint32_t width, uint32_t height, Filter filter, void *pixels)
 {
 	VulkanTexture *texture = new VulkanTexture;
 
-    int32_t texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load(file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    VkDeviceSize imageSize = texWidth * texHeight * 4;
+    VkDeviceSize imageSize = width * height * 4;
 
-	texture->width = texWidth;
-	texture->height = texHeight;
+	texture->width = width;
+	texture->height = height;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -610,8 +608,8 @@ Texture *VulkanRenderer::CreateTexture(const char *file, Filter filter)
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent.width = static_cast<uint32_t>(texWidth);
-    imageInfo.extent.height = static_cast<uint32_t>(texHeight);
+    imageInfo.extent.width = static_cast<uint32_t>(width);
+    imageInfo.extent.height = static_cast<uint32_t>(height);
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = 1;
     imageInfo.arrayLayers = 1;
@@ -634,7 +632,7 @@ Texture *VulkanRenderer::CreateTexture(const char *file, Filter filter)
     vkBindImageMemory(m_device, texture->image, texture->imageMemory, 0);
 
     TransitionImageLayout(texture->image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    CopyBufferToImage(stagingBuffer, texture->image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+    CopyBufferToImage(stagingBuffer, texture->image, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
     TransitionImageLayout(texture->image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkDestroyBuffer(m_device, stagingBuffer, nullptr);
@@ -673,6 +671,13 @@ Texture *VulkanRenderer::CreateTexture(const char *file, Filter filter)
 	texture->id = ImGui_ImplVulkan_AddTexture(texture->sampler, texture->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	return texture;
+}
+
+Texture *VulkanRenderer::CreateTexture(const char *file, Filter filter)
+{
+    int32_t texWidth, texHeight, texChannels;
+    stbi_uc* pixels = stbi_load(file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    return CreateTexture(texWidth, texHeight, filter, pixels);
 }
 
 void VulkanRenderer::DestroyTexture(Texture *texture)

@@ -29,6 +29,7 @@ public:
 	virtual void BeginFrame(void) = 0;
 	virtual void EndFrame(void) = 0;
 
+	virtual Texture *CreateTexture(uint32_t width, uint32_t height, Filter filter = Filter_Nearest, void *pixels = nullptr) = 0;
 	virtual Texture *CreateTexture(const char *file, Filter filter = Filter_Nearest) = 0;
 	virtual void DestroyTexture(Texture *texture) = 0;
 

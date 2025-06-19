@@ -47,6 +47,9 @@ private:
 		friend class EditorWindow;
 	};
 
+	void AddMultilineErrorMarker(TextEditor& editor, int startLine, int startColumn, int endLine, int endColumn, const std::string& fullMessage);
+	void ExtractCompletions(TSNode node, const std::string& source);
+
 	char m_titleBuffer[1024];
 
 	TextEditor m_editor;

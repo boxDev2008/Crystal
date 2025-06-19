@@ -32,6 +32,7 @@ public:
 	void BeginFrame(void) override;
 	void EndFrame(void) override;
 
+	Texture *CreateTexture(uint32_t width, uint32_t height, Filter filter, void *pixels) override;
 	Texture *CreateTexture(const char *file, Filter filter) override;
 	void DestroyTexture(Texture *texture) override;
 

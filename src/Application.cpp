@@ -368,7 +368,7 @@ Application::Application(void)
 		OnRender();
 
 		m_preferences->Refresh();
-		m_windowManager.ManageFreedCache();
+		m_windowManager.ManageFreed();
 	}
 
 	m_windowManager.FreeAllWindows();

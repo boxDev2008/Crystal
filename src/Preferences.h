@@ -3,6 +3,7 @@
 #include "TextEditor/TextEditor.h"
 #include "WindowManager.h"
 #include "PlatformWindow.h"
+#include "Rendering/Renderer.h"
 
 namespace Crystal
 {
@@ -33,6 +34,7 @@ public:
 
         PlatformWindow *m_mainWindow;
         WindowManager *m_wm;
+        Renderer *m_renderer;
 
     private:
         std::unordered_map<std::string, ImFont*> m_fonts;

@@ -33,7 +33,7 @@ void WindowManager::AddWindow(Window *window)
 	m_windows.push_back(window);
 }
 
-void WindowManager::ManageFreedCache(void)
+void WindowManager::ManageFreed(void)
 {
 	if (m_freedWindows.empty())
 		return;

@@ -91,17 +91,21 @@ void CompletionMenu::Render(void)
     ImGui::SetNextWindowPos(ImVec2(offsetX, offsetY));
     ImGui::SetNextWindowSizeConstraints(ImVec2(200, 0), ImVec2(FLT_MAX, 200));
 
+    ImGui::SetNextWindowViewport(ImGui::GetWindowViewport()->ID);
+
 	ImGuiStyle &style = ImGui::GetStyle();
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.FramePadding);
     ImGui::PushStyleColor(ImGuiCol_WindowBg, style.Colors[ImGuiCol_MenuBarBg]);
-    if (ImGui::Begin("CompletionMenu", nullptr, 
+    if (ImGui::Begin("CompletionMenu", nullptr,
         ImGuiWindowFlags_NoTitleBar |
         ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_AlwaysAutoResize |
         ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoSavedSettings |
-        ImGuiWindowFlags_NoFocusOnAppearing
+        ImGuiWindowFlags_NoFocusOnAppearing |
+        ImGuiWindowFlags_NoDocking |
+        ImGuiWindowFlags_Tooltip
 	))
     {
         if (ImGui::IsKeyPressed(ImGuiKey_Tab, false))

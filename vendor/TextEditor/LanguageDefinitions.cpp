@@ -418,33 +418,6 @@ static bool TokenizeLuaStylePunctuation(const char* in_begin, const char* in_end
 	return false;
 }
 
-static bool TokenizeIniVariableName(const char* in_begin, const char* in_end, const char*& out_begin, const char*& out_end)
-{
-    const char* p = in_begin;
-
-    while (p < in_end && (*p == ' ' || *p == '\t'))
-        p++;
-
-    out_begin = p;
-
-    while (p < in_end && *p != '=')
-        p++;
-
-    if (p < in_end && *p == '=')
-    {
-        const char* end = p;
-        while (end > out_begin && (*(end - 1) == ' ' || *(end - 1) == '\t'))
-            end--;
-
-        out_end = end;
-
-        if (out_begin < out_end)
-            return true;
-    }
-
-    return false;
-}
-
 const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Cpp()
 {
 	static bool inited = false;
@@ -646,7 +619,7 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Python()
 		for (auto& k : keywords)
 			langDef.mKeywords.insert(k);
 
-		static const char* const identifiers[] = {
+		/*static const char* const identifiers[] = {
 			"abs", "aiter", "all", "any", "anext", "ascii", "bin", "bool", "breakpoint", "bytearray", "bytes", "callable", "chr", "classmethod", "compile", "complex", "delattr", "dict", "dir", "divmod", "enumerate", "eval", "exec", "filter", "float", "format", "frozenset", "getattr", "globals", "hasattr", "hash", "help", "hex", "id", "input", "int", "isinstance", "issubclass", "iter", "len", "list", "locals", "map", "max", "memoryview", "min", "next", "object", "oct", "open", "ord", "pow", "print", "property", "range", "repr", "reversed", "round", "set", "setattr", "slice", "sorted", "staticmethod", "str", "sum", "super", "tuple", "type", "vars", "zip", "__import__"
 		};
 		for (auto& k : identifiers)
@@ -654,7 +627,7 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Python()
 			Identifier id;
 			id.mDeclaration = "Built-in function";
 			langDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
-		}
+		}*/
 
 		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##((b|u|f|r)?\"(\\.|[^\"])*\")##", PaletteIndex::String));
 		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##((b|u|f|r)?'(\\.|[^'])*')##", PaletteIndex::String));
@@ -767,7 +740,7 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Sql()
 		for (auto& k : keywords)
 			langDef.mKeywords.insert(k);
 
-		static const char* const identifiers[] = {
+		/*static const char* const identifiers[] = {
 			"ABS", "ACOS", "ADD_MONTHS", "ASCII", "ASCIISTR", "ASIN", "ATAN", "ATAN2", "AVG", "BFILENAME", "BIN_TO_NUM", "BITAND", "CARDINALITY", "CASE", "CAST", "CEIL",
 			"CHARTOROWID", "CHR", "COALESCE", "COMPOSE", "CONCAT", "CONVERT", "CORR", "COS", "COSH", "COUNT", "COVAR_POP", "COVAR_SAMP", "CUME_DIST", "CURRENT_DATE",
 			"CURRENT_TIMESTAMP", "DBTIMEZONE", "DECODE", "DECOMPOSE", "DENSE_RANK", "DUMP", "EMPTY_BLOB", "EMPTY_CLOB", "EXP", "EXTRACT", "FIRST_VALUE", "FLOOR", "FROM_TZ", "GREATEST",
@@ -782,9 +755,9 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Sql()
 		for (auto& k : identifiers)
 		{
 			Identifier id;
-			//id.mDeclaration = "Built-in function";
+			id.mDeclaration = "Built-in function";
 			langDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
-		}
+		}*/
 
 		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##(L?\"(\\.|[^\"])*\")##", PaletteIndex::String));
 		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##(\'[^\']*\')##", PaletteIndex::String));
@@ -824,16 +797,16 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::AngelScrip
 		for (auto& k : keywords)
 			langDef.mKeywords.insert(k);
 
-		static const char* const identifiers[] = {
+		/*static const char* const identifiers[] = {
 			"cos", "sin", "tab", "acos", "asin", "atan", "atan2", "cosh", "sinh", "tanh", "log", "log10", "pow", "sqrt", "abs", "ceil", "floor", "fraction", "closeTo", "fpFromIEEE", "fpToIEEE",
 			"complex", "opEquals", "opAddAssign", "opSubAssign", "opMulAssign", "opDivAssign", "opAdd", "opSub", "opMul", "opDiv"
 		};
 		for (auto& k : identifiers)
 		{
 			Identifier id;
-			//id.mDeclaration = "Built-in function";
+			id.mDeclaration = "Built-in function";
 			langDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
-		}
+		}*/
 
 		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##(L?\"(\\.|[^\"])*\")##", PaletteIndex::String));
 		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##(\'\\?[^\']\')##", PaletteIndex::String));
@@ -870,7 +843,7 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Lua()
 		for (auto& k : keywords)
 			langDef.mKeywords.insert(k);
 
-		static const char* const identifiers[] = {
+		/*static const char* const identifiers[] = {
 			"assert", "collectgarbage", "dofile", "error", "getmetatable", "ipairs", "loadfile", "load", "loadstring", "next", "pairs", "pcall", "print", "rawequal", "rawlen", "rawget", "rawset",
 			"select", "setmetatable", "tonumber", "tostring", "type", "xpcall", "_G", "_VERSION","arshift", "band", "bnot", "bor", "bxor", "btest", "extract", "lrotate", "lshift", "replace",
 			"rrotate", "rshift", "create", "resume", "running", "status", "wrap", "yield", "isyieldable", "debug","getuservalue", "gethook", "getinfo", "getlocal", "getregistry", "getmetatable",
@@ -885,9 +858,9 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Lua()
 		for (auto& k : identifiers)
 		{
 			Identifier id;
-			//id.mDeclaration = "Built-in function";
+			id.mDeclaration = "Built-in function";
 			langDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
-		}
+		}*/
 
 		langDef.mTokenize = [](const char* in_begin, const char* in_end, const char*& out_begin, const char*& out_end, PaletteIndex& paletteIndex) -> bool
 		{
@@ -976,7 +949,7 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Json()
 	if (!inited)
 	{
 		langDef.mKeywords.clear();
-		langDef.mIdentifiers.clear();
+		//langDef.mIdentifiers.clear();
 
 		
 		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##(\"(\\.|[^\"])*\")##", PaletteIndex::String));
@@ -995,405 +968,4 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Json()
 		inited = true;
 	}
 	return langDef;
-}
-
-const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Rust()
-{
-    static bool inited = false;
-    static LanguageDefinition langDef;
-    if (!inited)
-    {
-        static const char* const rustKeywords[] = {
-            "as", "async", "await", "break", "const", "continue", "crate", "dyn", "else", "enum", "extern", "fn", "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "self", "static", "struct", "trait", "type", "unsafe", "use", "where", "while", "yield"
-        };
-        for (auto& k : rustKeywords)
-            langDef.mKeywords.insert(k);
-
-        // Comment styles
-        langDef.mCommentStart = "/*";
-        langDef.mCommentEnd = "*/";
-        langDef.mSingleLineComment = "//";
-
-        // Tokenize function
-        langDef.mTokenize = [](const char * in_begin, const char * in_end, const char *& out_begin, const char *& out_end, PaletteIndex & paletteIndex) -> bool
-        {
-            paletteIndex = PaletteIndex::Max;
-
-            while (in_begin < in_end && isascii(*in_begin) && isblank(*in_begin))
-                in_begin++;
-
-            if (in_begin == in_end)
-            {
-                out_begin = in_end;
-                out_end = in_end;
-                paletteIndex = PaletteIndex::Default;
-            }
-            else if (TokenizeCStyleString(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::String;
-            else if (TokenizeCStyleCharacterLiteral(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::CharLiteral;
-			else if (TokenizeCStyleFunctionName(langDef, in_begin, in_end, out_begin, out_end))
-				paletteIndex = PaletteIndex::KnownIdentifier;
-            else if (TokenizeCStyleIdentifier(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::Identifier;
-            else if (TokenizeCStyleNumber(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::Number;
-            else if (TokenizeCStylePunctuation(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::Punctuation;
-
-            return paletteIndex != PaletteIndex::Max;
-        };
-
-        // Additional settings
-        langDef.mCaseSensitive = true;
-        langDef.mName = "Rust";
-
-        inited = true;
-    }
-    return langDef;
-}
-
-const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::JavaScript()
-{
-    static bool inited = false;
-    static LanguageDefinition langDef;
-    if (!inited)
-    {
-        static const char* const jsKeywords[] = {
-            "await", "break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally", "for", "function", "if", "import", "in", "instanceof", 
-            "new", "null", "return", "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void", "while", "with", "yield"
-        };
-
-        for (auto& k : jsKeywords)
-            langDef.mKeywords.insert(k);
-
-        static const char* const identifiers[] = {
-            "Array", "Boolean", "Date", "Error", "Function", "JSON", "Math", "Number", "Object", "Promise", "RegExp", "String", "Symbol", "TypeError", "ValueError"
-        };
-        for (auto& k : identifiers)
-        {
-            Identifier id;
-            //id.mDeclaration = "Built-in function";
-            langDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
-        }
-
-        langDef.mTokenize = [](const char * in_begin, const char * in_end, const char *& out_begin, const char *& out_end, PaletteIndex & paletteIndex) -> bool
-        {
-            paletteIndex = PaletteIndex::Max;
-
-            while (in_begin < in_end && isascii(*in_begin) && isblank(*in_begin))
-                in_begin++;
-
-            if (in_begin == in_end)
-            {
-                out_begin = in_end;
-                out_end = in_end;
-                paletteIndex = PaletteIndex::Default;
-            }
-            else if (TokenizeCStyleString(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::String;
-            else if (TokenizeCStyleCharacterLiteral(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::CharLiteral;
-			else if (TokenizeCStyleFunctionName(langDef, in_begin, in_end, out_begin, out_end))
-				paletteIndex = PaletteIndex::KnownIdentifier;
-            else if (TokenizeCStyleIdentifier(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::Identifier;
-            else if (TokenizeCStyleNumber(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::Number;
-            else if (TokenizeCStylePunctuation(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::Punctuation;
-
-            return paletteIndex != PaletteIndex::Max;
-        };
-
-        langDef.mCommentStart = "/*";
-        langDef.mCommentEnd = "*/";
-        langDef.mSingleLineComment = "//";
-
-        langDef.mCaseSensitive = true;
-
-        langDef.mName = "JavaScript";
-
-        inited = true;
-    }
-    return langDef;
-}
-
-const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Ini()
-{
-    static bool inited = false;
-    static LanguageDefinition langDef;
-    if (!inited)
-    {
-        langDef.mCommentStart = "\n";
-        langDef.mCommentEnd = "\n";
-        langDef.mSingleLineComment = ";";
-
-        langDef.mTokenize = [](const char * in_begin, const char * in_end, const char *& out_begin, const char *& out_end, PaletteIndex & paletteIndex) -> bool
-        {
-            paletteIndex = PaletteIndex::Max;
-
-            while (in_begin < in_end && isascii(*in_begin) && isblank(*in_begin))
-                in_begin++;
-
-            if (in_begin == in_end)
-            {
-                out_begin = in_end;
-                out_end = in_end;
-                paletteIndex = PaletteIndex::Default;
-            }
-			else if (TokenizeCStyleString(in_begin, in_end, out_begin, out_end))
-				paletteIndex = PaletteIndex::String;
-			else if (TokenizeCStyleCharacterLiteral(in_begin, in_end, out_begin, out_end))
-				paletteIndex = PaletteIndex::CharLiteral;
-			else if (TokenizeIniVariableName(in_begin, in_end, out_begin, out_end))
-				paletteIndex = PaletteIndex::KnownIdentifier;
-			else if (TokenizeCStyleIdentifier(in_begin, in_end, out_begin, out_end))
-				paletteIndex = PaletteIndex::Identifier;
-			else if (TokenizeCStylePunctuation(in_begin, in_end, out_begin, out_end))
-				paletteIndex = PaletteIndex::Punctuation;
-
-            return paletteIndex != PaletteIndex::Max;
-        };
-
-        langDef.mCaseSensitive = false;
-		langDef.mPreprocChar = 0;
-        langDef.mName = "Ini";
-
-        inited = true;
-    }
-    return langDef;
-}
-
-const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Html()
-{
-    static bool inited = false;
-    static LanguageDefinition langDef;
-    if (!inited)
-    {
-		langDef = Css();
-        static const char* const keywords[] = {
-            "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi", "bdo", "blockquote", "body", "br", "button",
-            "canvas", "caption", "cite", "code", "col", "colgroup", "data", "datalist", "dd", "del", "details", "dfn", "dialog", "div",
-            "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "head",
-            "header", "hr", "html", "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link", "main", "map", "mark",
-            "meta", "meter", "nav", "noscript", "object", "ol", "optgroup", "option", "output", "p", "picture", "pre", "progress", "q",
-            "rp", "rt", "ruby", "s", "samp", "script", "section", "select", "small", "source", "span", "strong", "style", "sub", "summary",
-            "sup", "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul",
-            "var", "video", "wbr"
-        };
-
-        for (auto& k : keywords)
-            langDef.mKeywords.insert(k);
-
-        /*static const char* const identifiers[] = {
-            "class", "id", "src", "href", "alt", "title", "style", "type", "name", "value", "placeholder", "checked", "disabled", "readonly",
-            "selected", "required", "multiple", "maxlength", "minlength", "min", "max", "step", "pattern", "size", "rows", "cols", "wrap",
-            "target", "rel", "media", "download", "accept", "autocomplete", "autofocus", "autoplay", "controls", "loop", "muted", "poster",
-            "preload", "width", "height", "charset", "content", "http-equiv", "language", "defer", "async", "crossorigin", "integrity"
-        };
-
-        for (auto& k : identifiers)
-        {
-            Identifier id;
-            //id.mDeclaration = "HTML attribute";
-            langDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
-        }*/
-
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##(\"[^\"]*\")##", PaletteIndex::String));
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##(\'[^\']*\')##", PaletteIndex::String));
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##([+-]?([0-9]+([.][0-9]*)?|[.][0-9]+))##", PaletteIndex::Number));
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##([a-zA-Z_][a-zA-Z0-9_\-]*)##", PaletteIndex::Identifier));
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##([<>\/\=\!])##", PaletteIndex::Punctuation));
-
-        langDef.mCommentStart = "<!--";
-        langDef.mCommentEnd = "-->";
-        langDef.mSingleLineComment = "";
-
-        langDef.mCaseSensitive = false;
-
-        langDef.mName = "HTML";
-
-        inited = true;
-    }
-    return langDef;
-}
-
-const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Css()
-{
-    static bool inited = false;
-    static LanguageDefinition langDef;
-    if (!inited)
-    {
-        static const char* const keywords[] = {
-            "align-content", "align-items", "align-self", "all", "animation", "animation-delay", "animation-direction", 
-            "animation-duration", "animation-fill-mode", "animation-iteration-count", "animation-name", "animation-play-state", 
-            "animation-timing-function", "backface-visibility", "background", "background-attachment", "background-blend-mode", 
-            "background-clip", "background-color", "background-image", "background-origin", "background-position", "background-repeat", 
-            "background-size", "border", "border-bottom", "border-bottom-color", "border-bottom-left-radius", "border-bottom-right-radius", 
-            "border-bottom-style", "border-bottom-width", "border-collapse", "border-color", "border-image", "border-image-outset", 
-            "border-image-repeat", "border-image-slice", "border-image-source", "border-image-width", "border-left", "border-left-color", 
-            "border-left-style", "border-left-width", "border-radius", "border-right", "border-right-color", "border-right-style", 
-            "border-right-width", "border-spacing", "border-style", "border-top", "border-top-color", "border-top-left-radius", 
-            "border-top-right-radius", "border-top-style", "border-top-width", "border-width", "bottom", "box-shadow", "box-sizing", 
-            "caption-side", "clear", "clip", "color", "column-count", "column-fill", "column-gap", "column-rule", "column-rule-color", 
-            "column-rule-style", "column-rule-width", "column-span", "column-width", "columns", "content", "counter-increment", 
-            "counter-reset", "cursor", "direction", "display", "empty-cells", "filter", "flex", "flex-basis", "flex-direction", 
-            "flex-flow", "flex-grow", "flex-shrink", "flex-wrap", "float", "font", "font-family", "font-feature-settings", "font-kerning", 
-            "font-language-override", "font-size", "font-size-adjust", "font-stretch", "font-style", "font-synthesis", "font-variant", 
-            "font-variant-alternates", "font-variant-caps", "font-variant-east-asian", "font-variant-ligatures", "font-variant-numeric", 
-            "font-variant-position", "font-weight", "grid", "grid-area", "grid-auto-columns", "grid-auto-flow", "grid-auto-rows", 
-            "grid-column", "grid-column-end", "grid-column-gap", "grid-column-start", "grid-gap", "grid-row", "grid-row-end", "grid-row-gap", 
-            "grid-row-start", "grid-template", "grid-template-areas", "grid-template-columns", "grid-template-rows", "hanging-punctuation", 
-            "height", "hyphens", "image-rendering", "isolation", "justify-content", "left", "letter-spacing", "line-break", "line-height", 
-            "list-style", "list-style-image", "list-style-position", "list-style-type", "margin", "margin-bottom", "margin-left", 
-            "margin-right", "margin-top", "max-height", "max-width", "min-height", "min-width", "mix-blend-mode", "object-fit", 
-            "object-position", "opacity", "order", "orphans", "outline", "outline-color", "outline-offset", "outline-style", 
-            "outline-width", "overflow", "overflow-wrap", "overflow-x", "overflow-y", "padding", "padding-bottom", "padding-left", 
-            "padding-right", "padding-top", "page-break-after", "page-break-before", "page-break-inside", "perspective", "perspective-origin", 
-            "pointer-events", "position", "quotes", "resize", "right", "scroll-behavior", "tab-size", "table-layout", "text-align", 
-            "text-align-last", "text-combine-upright", "text-decoration", "text-decoration-color", "text-decoration-line", 
-            "text-decoration-style", "text-indent", "text-justify", "text-orientation", "text-overflow", "text-shadow", "text-transform", 
-            "text-underline-position", "top", "transform", "transform-origin", "transform-style", "transition", "transition-delay", 
-            "transition-duration", "transition-property", "transition-timing-function", "unicode-bidi", "user-select", "vertical-align", 
-            "visibility", "white-space", "widows", "width", "word-break", "word-spacing", "word-wrap", "writing-mode", "z-index"
-        };
-
-        for (auto& k : keywords)
-            langDef.mKeywords.insert(k);
-
-        static const char* const identifiers[] = {
-            "absolute", "auto", "block", "bold", "both", "break-word", "center", "clip", "collapse", "content-box", "cover", "dashed", 
-            "dotted", "double", "ease", "ease-in", "ease-in-out", "ease-out", "fixed", "flex", "hidden", "inherit", "initial", "inline", 
-            "inline-block", "inline-flex", "italic", "justify", "large", "left", "lighter", "line-through", "medium", "none", "normal", 
-            "nowrap", "pre", "pre-line", "pre-wrap", "relative", "repeat", "repeat-x", "repeat-y", "revert", "right", "scroll", "separate", 
-            "small", "solid", "static", "sticky", "stretch", "thin", "thick", "underline", "unset", "uppercase", "visible"
-        };
-
-        for (auto& k : identifiers)
-        {
-            Identifier id;
-            //id.mDeclaration = "CSS value";
-            langDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
-        }
-
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##(\"[^\"]*\")##", PaletteIndex::String)); // Double-quoted strings
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##(\'[^\']*\')##", PaletteIndex::String)); // Single-quoted strings
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##(\#[0-9a-fA-F]{3,6})##", PaletteIndex::Number)); // Hex colors
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##([+-]?([0-9]*[.])?[0-9]+(px|em|rem|%|vh|vw|vmin|vmax|ch|ex|cm|mm|in|pt|pc)?)##", PaletteIndex::Number)); // Numbers with units
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##([a-zA-Z_-][a-zA-Z0-9_-]*)##", PaletteIndex::Identifier)); // Identifiers
-        langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(R"##([{}\[\]:;,.\/])##", PaletteIndex::Punctuation)); // Punctuation
-
-        langDef.mCommentStart = "/*";
-        langDef.mCommentEnd = "*/";
-        langDef.mSingleLineComment = "";
-
-        langDef.mCaseSensitive = false;
-
-        langDef.mName = "CSS";
-
-        inited = true;
-    }
-    return langDef;
-}
-
-const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Gml()
-{
-    static bool inited = false;
-    static LanguageDefinition langDef;
-    if (!inited)
-    {
-        static const char* const keywords[] = {
-            "begin", "end", "if", "else", "while", "for", "do", "switch", "case", "break", "continue", "return", "function",
-            "var", "globalvar", "with", "repeat", "until", "enum", "and", "or", "not", "xor", "true", "false"
-        };
-        for (auto& k : keywords)
-            langDef.mKeywords.insert(k);
-
-        static const char* const identifiers[] = {
-            "abs", "arccos", "arcsin", "arctan", "ceil", "cos", "exp", "floor", "log", "round", "sin", "sqrt", "tan",
-            "draw_text", "draw_sprite", "instance_create", "instance_destroy", "keyboard_check", "mouse_check_button",
-        };
-        for (auto& k : identifiers)
-        {
-            Identifier id;
-            id.mDeclaration = "Built-in function";
-            langDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
-        }
-
-        // Tokenizer function for GML
-        langDef.mTokenize = [](const char* in_begin, const char* in_end, const char*& out_begin, const char*& out_end, PaletteIndex& paletteIndex) -> bool
-        {
-            paletteIndex = PaletteIndex::Max;
-
-            while (in_begin < in_end && isascii(*in_begin) && isblank(*in_begin))
-                in_begin++;
-
-            if (in_begin == in_end)
-            {
-                out_begin = in_end;
-                out_end = in_end;
-                paletteIndex = PaletteIndex::Default;
-            }
-            else if (TokenizeCStyleString(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::String;
-			else if (TokenizeCStyleFunctionName(langDef, in_begin, in_end, out_begin, out_end))
-				paletteIndex = PaletteIndex::KnownIdentifier;
-            else if (TokenizeCStyleIdentifier(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::Identifier;
-            else if (TokenizeCStyleNumber(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::Number;
-            else if (TokenizeCStylePunctuation(in_begin, in_end, out_begin, out_end))
-                paletteIndex = PaletteIndex::Punctuation;
-
-            return paletteIndex != PaletteIndex::Max;
-        };
-
-        langDef.mCommentStart = "/*";
-        langDef.mCommentEnd = "*/";
-        langDef.mSingleLineComment = "//";
-
-        langDef.mCaseSensitive = true;
-        langDef.mName = "GML";
-
-        inited = true;
-    }
-    return langDef;
-}
-
-const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Text()
-{
-    static bool inited = false;
-    static LanguageDefinition langDef;
-    if (!inited)
-    {
-        langDef.mCommentStart = "\n";
-        langDef.mCommentEnd = "\n";
-        langDef.mSingleLineComment = "\n";
-        // Tokenize function
-        langDef.mTokenize = [](const char * in_begin, const char * in_end, const char *& out_begin, const char *& out_end, PaletteIndex & paletteIndex) -> bool
-        {
-            paletteIndex = PaletteIndex::Max;
-
-            while (in_begin < in_end && isascii(*in_begin) && isblank(*in_begin))
-                in_begin++;
-
-            if (in_begin == in_end)
-            {
-                out_begin = in_end;
-                out_end = in_end;
-                paletteIndex = PaletteIndex::Default;
-            }
-
-            return paletteIndex != PaletteIndex::Max;
-        };
-
-        // Additional settings
-        langDef.mCaseSensitive = false;
-		langDef.mPreprocChar = 0;
-        langDef.mName = "Text";
-
-        inited = true;
-    }
-    return langDef;
 }

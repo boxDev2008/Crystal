@@ -1,7 +1,7 @@
 #pragma once
 
+#include <cmath>
 #include <cassert>
-#include <math.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -10,7 +10,6 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <map>
-#include <regex>
 #include <functional>
 #include "imgui.h"
 
@@ -22,6 +21,14 @@ public:
 	TextEditor();
 	~TextEditor();
 
+	enum class PaletteId
+	{
+		Dark, Light, Mariana, RetroBlue
+	};
+	enum class LanguageDefinitionId
+	{
+		None, Cpp, C, Cs, Python, Lua, Json, Sql, AngelScript, Glsl, Hlsl
+	};
 	enum class SetViewAtLineMode
 	{
 		FirstVisibleLine, Centered, LastVisibleLine
@@ -54,13 +61,8 @@ public:
 		Max
 	};
 
-	// Represents a character coordinate from the user's point of view,
-	// i. e. consider an uniform grid (assuming fixed-width font) on the
-	// screen as it is rendered, and each cell has its own coordinate, starting from 0.
-	// Tabs are counted as [1..mTabSize] count empty spaces, depending on
-	// how many space is necessary to reach the next tab stop.
-	// For example, coordinate (1, 5) represents the character 'B' in a line "\tABC", when mTabSize = 4,
-	// because it is rendered as "    ABC" on the screen.
+	typedef std::array<ImU32, (unsigned)PaletteIndex::Max> Palette;
+
 	struct Coordinates
 	{
 		int mLine, mColumn;
@@ -125,49 +127,6 @@ public:
 		}
 	};
 
-	struct Identifier
-	{
-		Coordinates mLocation;
-		std::string mDeclaration;
-	};
-
-	typedef std::unordered_map<std::string, Identifier> Identifiers;
-	typedef std::array<ImU32, (unsigned)PaletteIndex::Max> Palette;
-
-	struct LanguageDefinition
-	{
-		typedef std::pair<std::string, PaletteIndex> TokenRegexString;
-		typedef bool(*TokenizeCallback)(const char* in_begin, const char* in_end, const char*& out_begin, const char*& out_end, PaletteIndex& paletteIndex);
-
-		std::string mName;
-		std::unordered_set<std::string> mKeywords;
-		Identifiers mIdentifiers;
-		Identifiers mPreprocIdentifiers;
-		std::string mCommentStart, mCommentEnd, mSingleLineComment;
-		char mPreprocChar = '#';
-		TokenizeCallback mTokenize = nullptr;
-		std::vector<TokenRegexString> mTokenRegexStrings;
-		bool mCaseSensitive = true;
-
-		static const LanguageDefinition& Cpp();
-		static const LanguageDefinition& Hlsl();
-		static const LanguageDefinition& Glsl();
-		static const LanguageDefinition& Python();
-		static const LanguageDefinition& C();
-		static const LanguageDefinition& Sql();
-		static const LanguageDefinition& AngelScript();
-		static const LanguageDefinition& Lua();
-		static const LanguageDefinition& Cs();
-		static const LanguageDefinition& Json();
-		static const LanguageDefinition& Rust();
-		static const LanguageDefinition& JavaScript();
-		static const LanguageDefinition& Ini();
-		static const LanguageDefinition& Html();
-		static const LanguageDefinition& Css();
-		static const LanguageDefinition& Gml();
-		static const LanguageDefinition& Text();
-	};
-
 	struct Cursor
 	{
 		Coordinates mInteractiveStart = { 0, 0 };
@@ -196,7 +155,11 @@ public:
 		UndoOperationType mType;
 	};
 
-	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
+	enum TSFlag
+	{
+		ReverseOperation = 1 << 0,
+		ReverseUndo = 1 << 1
+	};
 
 	class UndoRecord
 	{
@@ -216,10 +179,45 @@ public:
 
 		EditorState mBefore;
 		EditorState mAfter;
+		uint8_t mTSFlags = 0;
+		//bool mReversedOperations = false;
+		//bool mReversedUndo = false;
 	};
 
-	//typedef std::map<int, std::string> ErrorMarkers;
-	//void SetErrorMarkers(const ErrorMarkers& aMarkers) { mErrorMarkers = aMarkers; }
+	struct Identifier
+	{
+		Coordinates mLocation;
+		std::string mDeclaration;
+	};
+
+	typedef std::unordered_map<std::string, Identifier> Identifiers;
+
+	struct LanguageDefinition
+	{
+		typedef std::pair<std::string, PaletteIndex> TokenRegexString;
+		typedef bool(*TokenizeCallback)(const char* in_begin, const char* in_end, const char*& out_begin, const char*& out_end, PaletteIndex& paletteIndex);
+
+		std::string mName;
+		std::unordered_set<std::string> mKeywords;
+		Identifiers mIdentifiers;
+		Identifiers mPreprocIdentifiers;
+		std::string mCommentStart, mCommentEnd, mSingleLineComment;
+		char mPreprocChar = '#';
+		TokenizeCallback mTokenize = nullptr;
+		std::vector<TokenRegexString> mTokenRegexStrings;
+		bool mCaseSensitive = true;
+
+		static const LanguageDefinition& Cpp();
+		static const LanguageDefinition& Hlsl();
+		static const LanguageDefinition& Glsl();
+		static const LanguageDefinition& Python();
+		static const LanguageDefinition& C();
+		static const LanguageDefinition& Sql();
+		static const LanguageDefinition& AngelScript();
+		static const LanguageDefinition& Lua();
+		static const LanguageDefinition& Cs();
+		static const LanguageDefinition& Json();
+	};
 
 	struct ErrorMarker
 	{
@@ -232,6 +230,21 @@ public:
 	void ClearErrorMarkers() { mErrorMarkers.clear(); }
 	void AddErrorMarker(int aLine, int aStartColumn, int aEndColumn, const std::string& aMessage);
 
+	float GetScrollX() const { return mScrollX; }
+	float GetScrollY() const { return mScrollY; }
+
+	inline void SetTextChanged(bool aValue) { mTextChanged = aValue; }
+	inline bool IsTextChanged() const { return mTextChanged; }
+
+	void SetRecordCallback(std::function<void(const UndoRecord &)> aCallback) { mRecordCallback = aCallback; }
+
+	float TextDistanceToLineStart(const Coordinates& aFrom, bool aSanitizeCoords = true) const;
+	int GetLineMaxColumn(int aLine, int aLimit = -1) const;
+
+	int GetGlobalIndexFromPosition(const Coordinates& aCoords) const;
+	int GetCharacterIndexL(const Coordinates& aCoordinates) const;
+	int GetCharacterIndexR(const Coordinates& aCoordinates) const;
+
 	inline void SetReadOnlyEnabled(bool aValue) { mReadOnly = aValue; }
 	inline bool IsReadOnlyEnabled() const { return mReadOnly; }
 	inline void SetAutoIndentEnabled(bool aValue) { mAutoIndent = aValue; }
@@ -243,20 +256,19 @@ public:
 	inline void SetShortTabsEnabled(bool aValue) { mShortTabs = aValue; }
 	inline bool IsShortTabsEnabled() const { return mShortTabs; }
 	inline int GetLineCount() const { return mLines.size(); }
-	inline bool IsOverwriteEnabled() const { return mOverwrite; }
-	inline void SetTextChanged(bool aValue) { mTextChanged = aValue; }
-	inline bool IsTextChanged() const { return mTextChanged; }
 	void SetPalette(const Palette &aValue);
-	const Palette &GetPalette() const { return mPalette; }
-	void SetLanguageDefinition(const LanguageDefinition &aValue);
-	LanguageDefinition &GetLanguageDefinition() { return mLanguageDefinition; };
+	void SetPalette(PaletteId aValue);
+	PaletteId GetPalette() const { return mPaletteId; }
+	void SetLanguageDefinition(LanguageDefinitionId aValue);
+	LanguageDefinitionId GetLanguageDefinition() const { return mLanguageDefinitionId; };
 	const char* GetLanguageDefinitionName() const;
 	void SetTabSize(int aValue);
 	inline int GetTabSize() const { return mTabSize; }
 	void SetLineSpacing(float aValue);
 	inline float GetLineSpacing() const { return mLineSpacing;  }
 
-	void UninitializeSmoothScroll();
+	inline static void SetDefaultPalette(PaletteId aValue) { defaultPalette = aValue; }
+	inline static PaletteId GetDefaultPalette() { return defaultPalette; }
 
 	void SelectAll();
 	void SelectLine(int aLine);
@@ -268,25 +280,15 @@ public:
 	void ClearExtraCursors();
 	void ClearSelections();
 	void SetCursorPosition(int aLine, int aCharIndex);
-	void SetCursorPosition(const Coordinates& aPosition, int aCursor = -1, bool aClearSelection = true);
-
 	inline void GetCursorPosition(int& outLine, int& outColumn) const
 	{
-		auto coords = GetActualCursorCoordinates();
+		auto coords = GetSanitizedCursorCoordinates();
 		outLine = coords.mLine;
 		outColumn = coords.mColumn;
 	}
 	int GetFirstVisibleLine();
 	int GetLastVisibleLine();
 	void SetViewAtLine(int aLine, SetViewAtLineMode aMode);
-
-	int GetCharacterColumn(int aLine, int aIndex) const;
-	int GetCharacterIndexL(const Coordinates& aCoordinates) const;
-	int GetCharacterIndexR(const Coordinates& aCoordinates) const;
-
-	void InsertTextAtCursor(const char* aValue, int aCursor = -1);
-	float TextDistanceToLineStart(const Coordinates& aFrom, bool aSanitizeCoords = true) const;
-	void DeleteRange(const Coordinates& aStart, const Coordinates& aEnd);
 
 	void Copy();
 	void Cut();
@@ -297,11 +299,6 @@ public:
 	inline bool CanUndo() const { return !mReadOnly && mUndoIndex > 0; };
 	inline bool CanRedo() const { return !mReadOnly && mUndoIndex < (int)mUndoBuffer.size(); };
 	inline int GetUndoIndex() const { return mUndoIndex; };
-
-	float GetScrollX() const { return mScrollX; }
-	float GetScrollY() const { return mScrollY; }
-
-	void SetRecordCallback(std::function<void(const UndoRecord &)> aCallback) { mRecordCallback = aCallback; }
 
 	void SetText(const std::string& aText);
 	std::string GetText() const;
@@ -343,6 +340,14 @@ private:
 
 	// ------------- Internal ------------- //
 
+	// Represents a character coordinate from the user's point of view,
+	// i. e. consider an uniform grid (assuming fixed-width font) on the
+	// screen as it is rendered, and each cell has its own coordinate, starting from 0.
+	// Tabs are counted as [1..mTabSize] count empty spaces, depending on
+	// how many space is necessary to reach the next tab stop.
+	// For example, coordinate (1, 5) represents the character 'B' in a line "\tABC", when mTabSize = 4,
+	// because it is rendered as "    ABC" on the screen.
+
 	struct Glyph
 	{
 		char mChar;
@@ -361,7 +366,10 @@ private:
 	std::string GetClipboardText() const;
 	std::string GetSelectedText(int aCursor = -1) const;
 
+	void SetCursorPosition(const Coordinates& aPosition, int aCursor = -1, bool aClearSelection = true);
+
 	int InsertTextAt(Coordinates& aWhere, const char* aValue);
+	void InsertTextAtCursor(const char* aValue, int aCursor = -1);
 
 	enum class MoveDirection { Right = 0, Left = 1, Up = 2, Down = 3 };
 	bool Move(int& aLine, int& aCharIndex, bool aLeft = false, bool aLockLine = false) const;
@@ -397,16 +405,17 @@ private:
 	void EnsureCursorVisible(int aCursor = -1, bool aStartToo = false);
 
 	Coordinates SanitizeCoordinates(const Coordinates& aValue) const;
-	Coordinates GetActualCursorCoordinates(int aCursor = -1, bool aStart = false) const;
-	Coordinates ScreenPosToCoordinates(const ImVec2& aPosition, bool aInsertionMode = false, bool* isOverLineNumber = nullptr) const;
+	Coordinates GetSanitizedCursorCoordinates(int aCursor = -1, bool aStart = false) const;
+	Coordinates ScreenPosToCoordinates(const ImVec2& aPosition, bool* isOverLineNumber = nullptr) const;
 	Coordinates FindWordStart(const Coordinates& aFrom) const;
 	Coordinates FindWordEnd(const Coordinates& aFrom) const;
+	int GetCharacterColumn(int aLine, int aIndex) const;
 	int GetFirstVisibleCharacterIndex(int aLine) const;
-	int GetLineMaxColumn(int aLine, int aLimit = -1) const;
 
 	Line& InsertLine(int aIndex);
 	void RemoveLine(int aIndex, const std::unordered_set<int>* aHandledCursors = nullptr);
 	void RemoveLines(int aStart, int aEnd);
+	void DeleteRange(const Coordinates& aStart, const Coordinates& aEnd);
 	void DeleteSelection(int aCursor = -1);
 
 	void RemoveGlyphsFromLine(int aLine, int aStartChar, int aEndChar = -1);
@@ -423,29 +432,27 @@ private:
 	void OnLineChanged(bool aBeforeChange, int aLine, int aColumn, int aCharCount, bool aDeleted);
 	void MergeCursorsIfPossible();
 
+	void AddUndo(UndoRecord& aValue);
+
 	void Colorize(int aFromLine = 0, int aCount = -1);
 	void ColorizeRange(int aFromLine = 0, int aToLine = 0);
 	void ColorizeInternal();
 
-	void AddUndo(UndoRecord& aValue);
-
-	void RefreshScrollPosition();
-
-	EditorState GetState() const { return mState; }
+	std::function<void(const UndoRecord &)> mRecordCallback;
+	ErrorMarkers mErrorMarkers;
+	bool mTextChanged = false;
 
 	std::vector<Line> mLines;
 	EditorState mState;
 	std::vector<UndoRecord> mUndoBuffer;
 	int mUndoIndex = 0;
-	std::function<void(const UndoRecord &)> mRecordCallback;
 
 	int mTabSize = 4;
 	float mLineSpacing = 1.0f;
-	bool mOverwrite = false;
 	bool mReadOnly = false;
 	bool mAutoIndent = true;
-	bool mShowWhitespaces = false;
-	bool mShowLineNumbers = false;
+	bool mShowWhitespaces = true;
+	bool mShowLineNumbers = true;
 	bool mShortTabs = false;
 
 	int mSetViewAtLine = -1;
@@ -478,15 +485,13 @@ private:
 	bool mCursorOnBracket = false;
 	Coordinates mMatchingBracketCoords;
 
-	bool mTextChanged = false;
-
 	int mColorRangeMin = 0;
 	int mColorRangeMax = 0;
 	bool mCheckComments = true;
+	PaletteId mPaletteId;
 	Palette mPalette;
-	LanguageDefinition mLanguageDefinition;
-	ErrorMarkers mErrorMarkers;
-	RegexList mRegexList;
+	LanguageDefinitionId mLanguageDefinitionId;
+	const LanguageDefinition* mLanguageDefinition = nullptr;
 
 	inline bool IsHorizontalScrollbarVisible() const { return mCurrentSpaceWidth > mContentWidth; }
 	inline bool IsVerticalScrollbarVisible() const { return mCurrentSpaceHeight > mContentHeight; }
@@ -498,4 +503,9 @@ private:
 	static const Palette& GetRetroBluePalette();
 	static const std::unordered_map<char, char> OPEN_TO_CLOSE_CHAR;
 	static const std::unordered_map<char, char> CLOSE_TO_OPEN_CHAR;
+	static PaletteId defaultPalette;
+
+private:
+    struct RegexList;
+    std::shared_ptr<RegexList> mRegexList;
 };

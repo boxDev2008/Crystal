@@ -14,7 +14,7 @@ public:
     WindowManager(Application *application);
 
 	void RenderAllWindows(void);
-	void ManageFreedCache(void);
+	void ManageFreed(void);
 	void FreeAllWindows(void);
 
 	std::vector<Window*> &GetAllWindows(void) { return m_windows; }
