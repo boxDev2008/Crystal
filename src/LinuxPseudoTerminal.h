@@ -48,14 +48,12 @@ public:
             {
                 ssize_t bytesRead = read(masterFd, buffer, sizeof(buffer) - 1);
                 if (bytesRead > 0)
-                {
                     callback(buffer, bytesRead);
-                }
+				else if (bytesRead == 0)
+					break; // EOF, child has closed its end
                 else if (bytesRead == -1 && errno != EAGAIN && errno != EINTR)
-                {
                     break;  // An error occurred
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         });
     }
@@ -78,6 +76,8 @@ private:
         slaveFd = open(ptsname(masterFd), O_RDWR | O_NOCTTY);
         if (slaveFd == -1)
             ErrorExit("Failed to open pseudo terminal slave.");
+
+		fcntl(masterFd, F_SETFL, O_NONBLOCK);
     }
 
     void StartChildProcess(const std::string &shell, const std::filesystem::path &directory)
